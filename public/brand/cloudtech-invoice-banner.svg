@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="678" height="175" viewBox="0 0 678 175">
+  <rect width="678" height="175" rx="25" fill="#42698f"/>
+  <ellipse cx="568" cy="10" rx="195" ry="65" fill="#39c4cb" transform="rotate(-15 568 10)"/>
+  <ellipse cx="485" cy="189.5" rx="155" ry="57.5" fill="#39c4cb" transform="rotate(-15 485 189.5)"/>
+  <path d="M474 111h23l-12 13h-11z" fill="#16c8ce"/>
+  <path d="M509 111l-12 13h-9l-14 15v-15l12-13z" fill="#ececed"/>
+  <path d="M497 116a21 21 0 1 0 0 25l-7-7a11 11 0 1 1 0-12z" fill="#ececed"/>
+  <text x="515" y="139" font-family="Segoe UI,Arial,sans-serif" font-size="29" font-weight="700" fill="#ececed">CloudTech</text>
+  <text x="34" y="122" direction="rtl" font-family="DejaVu Sans,Tahoma,Arial,sans-serif" font-size="36" font-weight="900" fill="#ffffff">فاتورة</text>
+  <text x="34" y="145" font-family="Montserrat,Segoe UI,Arial,sans-serif" font-size="10" font-weight="800" letter-spacing="2" fill="#39c4cb">INVOICE</text>
+</svg>

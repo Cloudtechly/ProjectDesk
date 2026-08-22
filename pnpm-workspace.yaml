@@ -1,0 +1,11 @@
+packages:
+  - '.'
+
+allowBuilds:
+  unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - '@laravel/multiplex@0.4.1'
+
+publicHoistPattern:
+  - '@inertiajs/core'

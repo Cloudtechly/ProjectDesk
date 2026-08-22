@@ -1,0 +1,180 @@
+export const dashboardEnglish: Record<string, string> = {
+    اجتماع: 'Meeting',
+    'اختر أسبوعاً لمراجعة امتداد المهام عبر الأيام.':
+        'Choose a week to review how tasks span across days.',
+    'إضافة مهمة': 'Add task',
+    'أضف الفريق وأسند المهام لعرض التوزيع.':
+        'Add team members and assign tasks to display workload.',
+    'أضف تاريخ بداية ونهاية للمهام لتظهر على الجدول.':
+        'Add task start and end dates to show them on the schedule.',
+    'اقرأ وضع العمل، ثم انتقل مباشرة إلى ما يحتاج قرارك.':
+        'Review the current state, then go straight to what needs your decision.',
+    'الأسبوع التالي': 'Next week',
+    'الأسبوع السابق': 'Previous week',
+    'التخطيط الحالي': 'Current planning',
+    'الجدول الأسبوعي للمشاريع': 'Weekly project schedule',
+    الحوكمة: 'Governance',
+    الفريق: 'Team',
+    'المخاطر ذات الأولوية': 'Priority risks',
+    'المرحلة القادمة': 'Next milestone',
+    'المشاريع الجاري تنفيذها': 'Projects in progress',
+    'المشاريع النشطة': 'Active projects',
+    المشروع: 'Project',
+    'المشكلات المهمة المفتوحة': 'Important open issues',
+    'المهام القريبة والمتأخرة': 'Upcoming and overdue tasks',
+    'المهام المتأخرة': 'Overdue tasks',
+    'المهام المتأخرة والقريبة ستظهر هنا تلقائياً.':
+        'Overdue and upcoming tasks will appear here automatically.',
+    'المهام حسب الحالة': 'Tasks by status',
+    المهمة: 'Task',
+    انتقال: 'Go to',
+    أولوية: 'Priority',
+    'إيقاع التنفيذ': 'Delivery pace',
+    'بدأ قبل الأسبوع': 'Started before this week',
+    'تاريخ داخل الأسبوع': 'Date within the week',
+    'تحتاج انتباهك': 'Needs your attention',
+    'تحتاج تدخلاً': 'Needs intervention',
+    'تحتاج متابعة': 'Needs follow-up',
+    'تحتاج معالجة أو إعادة جدولة': 'Needs action or rescheduling',
+    'تظهر الحالات والنسب بعد إضافة المهام.':
+        'Statuses and percentages appear after tasks are added.',
+    'توازن الفريق': 'Team balance',
+    'توزيع قابل للتتبع': 'Traceable distribution',
+    'جدول المشاريع للأسبوع المختار': 'Project schedule for the selected week',
+    حرجة: 'Critical',
+    'دون حالة': 'No status',
+    'دون عميل': 'No client',
+    'دون مؤشر صحة': 'No health indicator',
+    'دون مشروع': 'No project',
+    'دون موعد': 'No due date',
+    'ستظهر الصحة المشتقة عند بدء المشاريع.':
+        'Derived health will appear once projects start.',
+    'ستظهر المخاطر المهمة هنا عند تسجيلها.':
+        'Important risks will appear here once recorded.',
+    'ستظهر المشاريع هنا بعد إنشاء أول مشروع.':
+        'Projects will appear here after the first project is created.',
+    'ستظهر المشكلات العالية والحرجة هنا حتى حلها.':
+        'High and critical issues will remain here until resolved.',
+    'سجل المخاطر': 'Risk register',
+    'صحة المشاريع النشطة': 'Active project health',
+    'صحة مشتقة من العمل': 'Health derived from work',
+    'ضمن نافذة المتابعة القريبة': 'Within the upcoming follow-up window',
+    عالية: 'High',
+    'عبء العمل الحالي': 'Current workload',
+    'عدد المشاريع المطابقة للقائمة المفلترة':
+        'Number of projects matching the filtered list',
+    'عرض الكل': 'View all',
+    'غرفة قيادة هادئة': 'A calm command center',
+    'غير محددة': 'Not specified',
+    'غير مسندة': 'Unassigned',
+    'فتح العمل': 'Open work',
+    'كل المشاريع': 'All projects',
+    'كل المهام': 'All tasks',
+    'لا توجد بيانات عبء عمل': 'No workload data',
+    'لا توجد جدولة لهذا الأسبوع': 'No schedule for this week',
+    'لا توجد مخاطر مرتفعة': 'No high risks',
+    'لا توجد مرحلة قادمة': 'No upcoming milestone',
+    'لا توجد مشاريع نشطة': 'No active projects',
+    'لا توجد مشكلات مهمة مفتوحة': 'No important open issues',
+    'لا توجد مهام تتطلب الانتباه': 'No tasks need attention',
+    'لا توجد مهام لعرضها': 'No tasks to display',
+    'لوحة المتابعة': 'Dashboard',
+    متأخرة: 'Overdue',
+    متوسطة: 'Medium',
+    'مستحقة قريباً': 'Due soon',
+    مستقرة: 'Stable',
+    'مشاريع بمخاطر مرتفعة': 'Projects with high risks',
+    'مفتوحة ·': 'Open ·',
+    'ملخص العمل': 'Work summary',
+    منخفضة: 'Low',
+    مهمة: 'Task',
+    'هذا الأسبوع': 'This week',
+    'يستمر بعد الأسبوع': 'Continues beyond this week',
+    ينتهي: 'Ends',
+};
+
+export const dashboardPatterns: Array<{ source: RegExp; target: string }> = [
+    {
+        source: /^مهمة، (.+)، المشروع (.+)، (.+) إلى (.+)، الحالة (.+)، بدأ قبل الأسبوع، يستمر بعد الأسبوع، فتح المهمة$/u,
+        target: 'Task, $1, project $2, $3 to $4, status $5, started before this week, continues beyond this week, open task',
+    },
+    {
+        source: /^مهمة، (.+)، المشروع (.+)، (.+) إلى (.+)، الحالة (.+)، بدأ قبل الأسبوع، فتح المهمة$/u,
+        target: 'Task, $1, project $2, $3 to $4, status $5, started before this week, open task',
+    },
+    {
+        source: /^مهمة، (.+)، المشروع (.+)، (.+) إلى (.+)، الحالة (.+)، يستمر بعد الأسبوع، فتح المهمة$/u,
+        target: 'Task, $1, project $2, $3 to $4, status $5, continues beyond this week, open task',
+    },
+    {
+        source: /^مهمة، (.+)، المشروع (.+)، (.+) إلى (.+)، الحالة (.+)، فتح المهمة$/u,
+        target: 'Task, $1, project $2, $3 to $4, status $5, open task',
+    },
+    {
+        source: /^اجتماع، (.+)، المشروع (.+)، (.+) إلى (.+)، الحالة (.+)، فتح المشروع$/u,
+        target: 'Meeting, $1, project $2, $3 to $4, status $5, open project',
+    },
+    {
+        source: /^جديدة: (.+) من (.+)، (.+) بالمئة\. فتح القائمة المفلترة$/u,
+        target: 'New: $1 of $2, $3 percent. Open the filtered list',
+    },
+    {
+        source: /^قيد التنفيذ: (.+) من (.+)، (.+) بالمئة\. فتح القائمة المفلترة$/u,
+        target: 'In progress: $1 of $2, $3 percent. Open the filtered list',
+    },
+    {
+        source: /^مراجعة: (.+) من (.+)، (.+) بالمئة\. فتح القائمة المفلترة$/u,
+        target: 'Review: $1 of $2, $3 percent. Open the filtered list',
+    },
+    {
+        source: /^مكتملة: (.+) من (.+)، (.+) بالمئة\. فتح القائمة المفلترة$/u,
+        target: 'Completed: $1 of $2, $3 percent. Open the filtered list',
+    },
+    {
+        source: /^ملغاة: (.+) من (.+)، (.+) بالمئة\. فتح القائمة المفلترة$/u,
+        target: 'Cancelled: $1 of $2, $3 percent. Open the filtered list',
+    },
+    {
+        source: /^تحتاج تدخلاً: (.+) من (.+)، (.+) بالمئة\. فتح القائمة المفلترة$/u,
+        target: 'Needs intervention: $1 of $2, $3 percent. Open the filtered list',
+    },
+    {
+        source: /^تحتاج متابعة: (.+) من (.+)، (.+) بالمئة\. فتح القائمة المفلترة$/u,
+        target: 'Needs follow-up: $1 of $2, $3 percent. Open the filtered list',
+    },
+    {
+        source: /^مستقرة: (.+) من (.+)، (.+) بالمئة\. فتح القائمة المفلترة$/u,
+        target: 'Stable: $1 of $2, $3 percent. Open the filtered list',
+    },
+    {
+        source: /^غير مسند: (.+) مهام مفتوحة، (.+) متأخرة$/u,
+        target: 'Unassigned: $1 open tasks, $2 overdue',
+    },
+    {
+        source: /^غير مسند: فتح (.+) مهام مفتوحة مفلترة$/u,
+        target: 'Unassigned: open $1 filtered tasks',
+    },
+    { source: /^· تستحق (.+)$/u, target: '· Due $1' },
+    {
+        source: /^(.+): (.+) من (.+)، (.+) بالمئة\. فتح القائمة المفلترة$/u,
+        target: '$1: $2 of $3, $4 percent. Open the filtered list',
+    },
+    {
+        source: /^(.+): (.+) مهام مفتوحة، (.+) متأخرة$/u,
+        target: '$1: $2 open tasks, $3 overdue',
+    },
+    {
+        source: /^(.+): فتح (.+) مهام مفتوحة مفلترة$/u,
+        target: '$1: open $2 filtered tasks',
+    },
+    { source: /^(.+) ٪$/u, target: '$1%' },
+    { source: /^(?!تم نقل المهمة )(.+) إلى (.+)$/u, target: '$1 to $2' },
+    { source: /^الحالة (.+)$/u, target: 'Status: $1' },
+    { source: /^المشروع (.+)$/u, target: 'Project $1' },
+    { source: /^تقدم (.+)$/u, target: '$1 progress' },
+    {
+        source: /^عرض (.+) مهمة إضافية في (.+)$/u,
+        target: 'Show $1 more tasks in $2',
+    },
+    { source: /^فتح (?!(?:ملف|قالب) )(.+)$/u, target: 'Open $1' },
+];

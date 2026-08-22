@@ -1,0 +1,50 @@
+<?php
+
+use App\Http\Controllers\Settings\NotificationPreferencesController;
+use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\SystemSettingsController;
+use App\Http\Middleware\RequireSensitiveProfilePassword;
+use App\Models\SystemSetting;
+use Illuminate\Auth\Middleware\RequirePassword;
+use Illuminate\Support\Facades\Route;
+
+Route::middleware(['auth', 'active'])->group(function () {
+    Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('settings/profile', [ProfileController::class, 'update'])
+        ->middleware(RequireSensitiveProfilePassword::class)
+        ->name('profile.update');
+    Route::get('settings/notifications', [NotificationPreferencesController::class, 'edit'])
+        ->name('notification-preferences.edit');
+    Route::patch('settings/notifications', [NotificationPreferencesController::class, 'update'])
+        ->name('notification-preferences.update');
+});
+
+Route::middleware(['auth', 'verified', 'active'])->group(function () {
+    Route::inertia('settings', 'settings/index')
+        ->can('viewAny', SystemSetting::class)
+        ->name('settings.index');
+    Route::get('system-settings', [SystemSettingsController::class, 'index'])
+        ->name('system-settings.index');
+    Route::put('system-settings/{group}', [SystemSettingsController::class, 'update'])
+        ->name('system-settings.update');
+    Route::delete('system-settings/{group}', [SystemSettingsController::class, 'destroy'])
+        ->name('system-settings.destroy');
+
+    Route::get('settings/security', [SecurityController::class, 'edit'])
+        ->middleware(RequirePassword::class)
+        ->name('security.edit');
+
+    Route::put('settings/password', [SecurityController::class, 'update'])
+        ->middleware('throttle:6,1')
+        ->name('user-password.update');
+});
+
+Route::get('.well-known/passkey-endpoints', function () {
+    return response()->json([
+        'enroll' => route('security.edit'),
+        'manage' => route('security.edit'),
+    ]);
+})->name('well-known.passkeys');
+
+require __DIR__.'/workflow-statuses.php';

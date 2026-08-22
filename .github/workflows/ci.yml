@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-and-tests:
+    name: PHP 8.4 / Node 22.12
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      APP_ENV: testing
+      APP_DEBUG: 'false'
+      DB_CONNECTION: sqlite
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: array
+      COMPOSER_NO_INTERACTION: '1'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+          extensions: bcmath, curl, dom, fileinfo, gd, intl, mbstring, pdo_sqlite, sqlite3, xml, zip
+          ini-values: memory_limit=512M, post_max_size=32M, upload_max_filesize=25M
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22.12.0'
+
+      - name: Enable locked pnpm version
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.16.0 --activate
+
+      - name: Prepare application files
+        run: |
+          cp .env.example .env
+          touch database/database.sqlite
+
+      - name: Validate Composer metadata
+        run: composer validate --strict --no-check-publish
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-progress --optimize-autoloader
+
+      - name: Audit PHP dependencies
+        run: composer audit --locked --no-interaction
+
+      - name: Configure and migrate SQLite
+        run: |
+          php artisan key:generate --force --no-interaction
+          php artisan migrate --force --no-interaction
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check frontend formatting
+        run: pnpm run format:check
+
+      - name: Lint frontend
+        run: pnpm run lint:check
+
+      - name: Check frontend types
+        run: pnpm run types:check
+
+      - name: Check Arabic and English catalog coverage
+        run: pnpm run i18n:check
+
+      - name: Build frontend
+        run: pnpm run build
+
+      - name: Run backend checks and tests
+        run: composer test
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Prepare deterministic browser fixtures
+        run: php artisan migrate:fresh --seed --force --no-interaction
+
+      - name: Start application for browser checks
+        run: php artisan serve --host=127.0.0.1 --port=8000 > storage/logs/browser-server.log 2>&1 &
+
+      - name: Run browser workflows and accessibility checks
+        run: pnpm run browser:check
+
+      - name: Upload browser evidence on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: browser-test-evidence
+          path: |
+            storage/app/browser-tests
+            storage/logs/browser-server.log
+          if-no-files-found: ignore
+          retention-days: 14
