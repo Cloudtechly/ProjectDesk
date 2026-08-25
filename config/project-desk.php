@@ -68,13 +68,24 @@ return [
         'orphan_retention_hours' => (int) env('UPLOAD_ORPHAN_RETENTION_HOURS', 72),
         'malware_scanner' => [
             'driver' => env('MALWARE_SCANNER_DRIVER', 'none'),
-            'executable' => env('MALWARE_SCANNER_EXECUTABLE', 'clamscan'),
+            'executable' => env('MALWARE_SCANNER_EXECUTABLE', 'clamdscan'),
             'arguments' => array_values(array_filter(array_map(
                 'trim',
-                explode(',', (string) env('MALWARE_SCANNER_ARGUMENTS', '--no-summary')),
+                explode(',', (string) env('MALWARE_SCANNER_ARGUMENTS', '--fdpass,--no-summary')),
             ))),
             'timeout_seconds' => (int) env('MALWARE_SCANNER_TIMEOUT', 30),
             'callback' => env('MALWARE_SCANNER_CALLBACK'),
         ],
+    ],
+    'operations' => [
+        'release_sha' => env('APP_RELEASE_SHA', ''),
+        'minimum_free_disk_bytes' => (int) env('MINIMUM_FREE_DISK_BYTES', 5 * 1024 * 1024 * 1024),
+        'rclone_remote' => env('RCLONE_REMOTE', ''),
+        'production_evidence_path' => env('PRODUCTION_EVIDENCE_PATH', storage_path('app/private/production-evidence.json')),
+        'clamav_signature_paths' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('CLAMAV_SIGNATURE_PATHS', '/var/lib/clamav/daily.cld,/var/lib/clamav/daily.cvd')),
+        ))),
+        'clamav_signature_max_age_seconds' => (int) env('CLAMAV_SIGNATURE_MAX_AGE_SECONDS', 48 * 60 * 60),
     ],
 ];

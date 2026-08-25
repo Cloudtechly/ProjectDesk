@@ -1,0 +1,17 @@
+[Unit]
+Description=Project Desk scheduler
+After=network.target
+
+[Service]
+Type=simple
+User=project-desk
+Group=project-desk
+WorkingDirectory=/var/www/project-desk
+ExecStart=/usr/bin/php artisan schedule:work
+Restart=always
+RestartSec=5
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

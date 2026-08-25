@@ -175,48 +175,42 @@ Audit & Notifications ◄── committed domain events
 
 يحظر الاعتماد الدائري بين طبقات المجال. إذا احتاج موديول معلومة من آخر، يستخدم معرفاً وQuery interface أو Application Service، لا يستدعي Controller أو مكون React.
 
-## 7. هيكل المجلدات المستهدف
+## 7. هيكل المجلدات المنفذ
 
-يبقى الهيكل Laravel-compatible مع تجميع حسب المجال:
+المستودع حاليًا modular monolith متوافق مع Laravel. لا يوجد `app/Domain`، ولا تدّعي هذه الوثيقة وجوده. فصل المسؤوليات منفذ عبر Models وPolicies وRequests وخدمات تطبيق مركزة، مع صفحات Inertia ومكونات حسب الوظيفة:
 
 ```text
 app/
-  Domain/
-    Projects/
-      Models/
-      Actions/
-      Queries/
-      Events/
-      Policies/
-      Data/
-    Work/
-    Requirements/
-    Planning/
-    Governance/
-    Documents/
-    InvoiceTemplates/
-    Directory/
-    Workflow/
-    Audit/
   Http/
     Controllers/
     Requests/
-  Support/
+  Models/
+  Policies/
+  Services/
+    ProjectIndexData.php
+    ProjectWorkspaceData.php
+    ProjectTeamService.php
+    ProjectLifecycleService.php
+    BackupBundleCryptographer.php
+    BackupFileRestoreTransaction.php
+  Security/
 resources/js/
   components/
+    projects/
+      governance-dialogs.tsx
+      phase-plan-workspace.tsx
+      requirement-taxonomy-workspace.tsx
+      requirement-analysis-workspace.tsx
   layouts/
   pages/
     dashboard/
     projects/
-    work/
-    directory/
-    sales/
-    admin/
-  features/
     tasks/
-    weekly-schedule/
-    sales-documents/
-  types/
+    clients/
+    team/
+    sales/
+    data-center/
+    settings/
 routes/
   web.php
   settings.php
@@ -230,7 +224,7 @@ tests/
   Browser/
 ```
 
-لا يلزم إنشاء مجلد لكل مستوى قبل وجود كود فعلي. الهدف منع تراكم جميع القواعد في Controllers أو صفحة React واحدة.
+عند نمو موديول يُستخرج إلى خدمة أو مكون وظيفي موجود فعليًا، ولا ينشأ هيكل `Domain` افتراضي بلا كود. `ProjectController` مثلًا ينسق الطلب فقط، بينما بناء بيانات القائمة ومساحة المشروع والفريق ودورة الحياة في خدمات مستقلة. النسخ الاحتياطي يفصل التشفير ومعاملة ملفات الاستعادة عن المنسق العام.
 
 ## 8. النموذج العلائقي الأساسي
 

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the Project Desk off-host backup every day
+
+[Timer]
+OnCalendar=*-*-* 02:15:00
+Persistent=true
+RandomizedDelaySec=900
+Unit=project-desk-offsite-backup.service
+
+[Install]
+WantedBy=timers.target

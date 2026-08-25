@@ -1,0 +1,33 @@
+{
+    "release_sha": "replace-with-final-40-character-sha",
+    "restore_drill": {
+        "completed_at": "2026-08-25T00:00:00+02:00",
+        "rpo_hours": 24,
+        "rto_hours": 4,
+        "backup_checksum_sha256": "replace-with-verified-checksum"
+    },
+    "accessibility": {
+        "approved_by": "replace-with-reviewer",
+        "keyboard": true,
+        "screen_reader": true,
+        "bidi": true,
+        "zoom_200_percent": true,
+        "reduced_motion": true
+    },
+    "performance": {
+        "inp_p75_ms": 200,
+        "search_p95_ms": 500,
+        "dataset_description": "replace-with-representative-dataset"
+    },
+    "pilot": {
+        "projects": 2,
+        "users": 8,
+        "unassisted_success_percent": 90,
+        "sus": 75
+    },
+    "approvals": {
+        "product": "replace-with-name-and-date",
+        "technical": "replace-with-name-and-date",
+        "operations": "replace-with-name-and-date"
+    }
+}

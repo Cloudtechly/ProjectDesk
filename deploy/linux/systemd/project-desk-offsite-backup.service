@@ -1,0 +1,14 @@
+[Unit]
+Description=Create and verify a Project Desk off-host backup
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=project-desk
+Group=project-desk
+WorkingDirectory=/var/www/project-desk
+EnvironmentFile=/etc/project-desk/operations.env
+ExecStart=/var/www/project-desk/deploy/linux/scripts/offsite-backup.sh
+PrivateTmp=true
+NoNewPrivileges=true
