@@ -54,6 +54,9 @@ try {
     await editRequirement.press('Enter');
     dialog = page.getByRole('dialog');
     await dialog.getByLabel('العنوان').waitFor();
+    await page.waitForFunction(() =>
+        document.activeElement?.closest('[role="dialog"]'),
+    );
     await page.keyboard.press('Escape');
     await dialog.waitFor({ state: 'hidden' });
     await page.waitForFunction(
