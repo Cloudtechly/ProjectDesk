@@ -7,12 +7,14 @@
         "build": "vite build",
         "build:ssr": "vite build && vite build --ssr",
         "browser:check": "node tests/Browser/run-all.mjs",
+        "browser:release": "node tests/Browser/run-release.mjs",
         "dev": "vite",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
         "i18n:check": "node tests/Browser/i18n-catalog-check.mjs",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
+        "routes:generate": "php artisan wayfinder:generate --with-form",
         "types:check": "tsc --noEmit"
     },
     "devDependencies": {

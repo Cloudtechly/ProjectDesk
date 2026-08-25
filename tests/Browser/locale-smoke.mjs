@@ -6,7 +6,7 @@ import {
 } from './browser-runtime.mjs';
 
 const baseURL = process.env.APP_URL || 'http://127.0.0.1:8000';
-const applicationName = process.env.BROWSER_APP_NAME || 'Project Desk';
+const configuredApplicationName = process.env.BROWSER_APP_NAME;
 const routes = [
     { path: '/dashboard', heading: 'Dashboard', title: 'Dashboard' },
     { path: '/projects', heading: 'Projects', title: 'Projects' },
@@ -336,6 +336,19 @@ async function prepareEnglishAdminState(browser) {
         }
 
         const englishState = await context.storageState();
+        const dashboardTitle = await page.title();
+        const dashboardTitlePrefix = 'Dashboard - ';
+        const applicationName =
+            configuredApplicationName ??
+            (dashboardTitle.startsWith(dashboardTitlePrefix)
+                ? dashboardTitle.slice(dashboardTitlePrefix.length)
+                : '');
+
+        if (!applicationName) {
+            throw new Error(
+                `Could not resolve the application name from document title "${dashboardTitle}"`,
+            );
+        }
 
         if (
             !englishState.cookies.some(
@@ -347,13 +360,17 @@ async function prepareEnglishAdminState(browser) {
             );
         }
 
-        return englishState;
+        return { applicationName, storageState: englishState };
     } finally {
         await context.close();
     }
 }
 
-async function auditAuthenticatedEnglishRoutes(browser, storageState) {
+async function auditAuthenticatedEnglishRoutes(
+    browser,
+    storageState,
+    applicationName,
+) {
     const failures = [];
 
     for (const viewport of viewports) {
@@ -466,7 +483,8 @@ try {
         failures.push(
             ...(await auditAuthenticatedEnglishRoutes(
                 browser,
-                englishAdminState,
+                englishAdminState.storageState,
+                englishAdminState.applicationName,
             )),
         );
     }

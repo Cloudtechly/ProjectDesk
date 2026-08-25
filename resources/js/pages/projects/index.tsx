@@ -906,27 +906,29 @@ export default function ProjectsIndex({
                                                                 action={`/projects/${project.id}/restore`}
                                                                 method="post"
                                                             >
-                                                                <input
-                                                                    type="hidden"
-                                                                    name="lock_version"
-                                                                    value={
-                                                                        project.lockVersion ??
-                                                                        1
-                                                                    }
-                                                                />
                                                                 {({
                                                                     processing,
                                                                 }) => (
-                                                                    <button
-                                                                        type="submit"
-                                                                        disabled={
-                                                                            processing
-                                                                        }
-                                                                        className="table-restore-button"
-                                                                        aria-label={`استعادة ${project.name}`}
-                                                                    >
-                                                                        استعادة
-                                                                    </button>
+                                                                    <>
+                                                                        <input
+                                                                            type="hidden"
+                                                                            name="lock_version"
+                                                                            value={
+                                                                                project.lockVersion ??
+                                                                                1
+                                                                            }
+                                                                        />
+                                                                        <button
+                                                                            type="submit"
+                                                                            disabled={
+                                                                                processing
+                                                                            }
+                                                                            className="table-restore-button"
+                                                                            aria-label={`استعادة ${project.name}`}
+                                                                        >
+                                                                            استعادة
+                                                                        </button>
+                                                                    </>
                                                                 )}
                                                             </Form>
                                                         )}

@@ -77,6 +77,12 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Wayfinder route contracts
+        run: |
+          pnpm run routes:generate
+          test -d resources/js/routes
+          test -d resources/js/actions
+
       - name: Check frontend formatting
         run: pnpm run format:check
 
@@ -104,8 +110,8 @@ jobs:
       - name: Start application for browser checks
         run: php artisan serve --host=127.0.0.1 --port=8000 > storage/logs/browser-server.log 2>&1 &
 
-      - name: Run browser workflows and accessibility checks
-        run: pnpm run browser:check
+      - name: Run browser workflows and accessibility checks three times
+        run: pnpm run browser:release
 
       - name: Upload browser evidence on failure
         if: failure()

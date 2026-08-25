@@ -1,3 +1,5 @@
+import { mkdir } from 'node:fs/promises';
+import path from 'node:path';
 import process from 'node:process';
 
 import {
@@ -9,6 +11,42 @@ const baseURL = process.env.APP_URL || 'http://127.0.0.1:8000';
 const browser = await launchChromium();
 const storageState = await prepareAuthenticationState(browser, baseURL);
 const failures = [];
+const artifacts = path.resolve('storage', 'app', 'browser-tests');
+await mkdir(artifacts, { recursive: true });
+
+async function clickRealOverlay(page, label) {
+    const point = await page.evaluate(() => {
+        const overlay = document.querySelector('[data-slot="dialog-overlay"]');
+        const candidates = [
+            [4, 4],
+            [window.innerWidth - 4, 4],
+            [4, window.innerHeight - 4],
+            [window.innerWidth - 4, window.innerHeight - 4],
+        ];
+
+        for (const [x, y] of candidates) {
+            const target = document.elementFromPoint(x, y);
+
+            if (
+                overlay &&
+                target &&
+                (target === overlay || overlay.contains(target))
+            ) {
+                return { x, y };
+            }
+        }
+
+        return null;
+    });
+
+    if (!point) {
+        throw new Error(
+            `${label}: no physically clickable overlay point exists`,
+        );
+    }
+
+    await page.mouse.click(point.x, point.y);
+}
 
 async function assertUnsavedDialog({
     page,
@@ -61,18 +99,7 @@ async function assertUnsavedDialog({
             resolve();
         });
     });
-    const overlay = page.locator('[data-slot="dialog-overlay"]');
-    await overlay.dispatchEvent('pointerdown', {
-        bubbles: true,
-        button: 0,
-        pointerType: 'mouse',
-    });
-    await overlay.dispatchEvent('pointerup', {
-        bubbles: true,
-        button: 0,
-        pointerType: 'mouse',
-    });
-    await overlay.dispatchEvent('click', { bubbles: true, button: 0 });
+    await clickRealOverlay(page, label);
     await rejectedOverlayClose;
     await dialog.waitFor();
 
@@ -86,13 +113,11 @@ async function assertUnsavedDialog({
     await acceptedClose;
     await dialog.waitFor({ state: 'hidden' });
 
-    const focusReturned = await opener.evaluate(
+    const openerHandle = await opener.elementHandle();
+    await page.waitForFunction(
         (element) => document.activeElement === element,
+        openerHandle,
     );
-
-    if (!focusReturned) {
-        throw new Error(`${label}: focus did not return to the opener`);
-    }
 
     await opener.click();
     await dialog.waitFor();
@@ -103,9 +128,18 @@ async function assertUnsavedDialog({
     const navigationLink = page
         .locator(`main a[href="${navigationHref}"]`)
         .first();
-    page.once('dialog', (confirmation) => confirmation.dismiss());
+    const rejectedNavigation = new Promise((resolve) => {
+        page.once('dialog', async (confirmation) => {
+            await confirmation.dismiss();
+            resolve();
+        });
+    });
     await navigationLink.evaluate((element) => element.click());
-    await page.waitForTimeout(100);
+    await rejectedNavigation;
+    await page.waitForFunction(
+        (url) => window.location.href === url,
+        originalUrl,
+    );
 
     if (page.url() !== originalUrl || !(await dialog.isVisible())) {
         throw new Error(`${label}: rejected navigation discarded the dialog`);
@@ -178,6 +212,7 @@ for (const width of [360, 768]) {
         storageState,
     });
     const page = await context.newPage();
+    await context.tracing.start({ screenshots: true, snapshots: true });
 
     try {
         await page.goto(`${baseURL}/clients`, { waitUntil: 'networkidle' });
@@ -243,7 +278,19 @@ for (const width of [360, 768]) {
         await assertHistoryGuard(page, width);
     } catch (error) {
         failures.push(`${width}px: ${error.message}`);
+
+        await page.screenshot({
+            path: path.join(artifacts, `unsaved-dialogs-${width}-failure.png`),
+            fullPage: true,
+        });
+        await context.tracing.stop({
+            path: path.join(artifacts, `unsaved-dialogs-${width}-trace.zip`),
+        });
     } finally {
+        if (!failures.some((failure) => failure.startsWith(`${width}px:`))) {
+            await context.tracing.stop();
+        }
+
         await context.close();
     }
 }

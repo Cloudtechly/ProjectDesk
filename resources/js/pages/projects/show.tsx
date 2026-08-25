@@ -2733,20 +2733,22 @@ export default function ProjectShow({
                                     )
                                 }
                             >
-                                <input
-                                    type="hidden"
-                                    name="lock_version"
-                                    value={project.lock_version ?? 1}
-                                />
                                 {({ processing }) => (
-                                    <button
-                                        type="submit"
-                                        className="project-danger-action"
-                                        disabled={processing}
-                                    >
-                                        <Archive aria-hidden="true" />
-                                        أرشفة المشروع
-                                    </button>
+                                    <>
+                                        <input
+                                            type="hidden"
+                                            name="lock_version"
+                                            value={project.lock_version ?? 1}
+                                        />
+                                        <button
+                                            type="submit"
+                                            className="project-danger-action"
+                                            disabled={processing}
+                                        >
+                                            <Archive aria-hidden="true" />
+                                            أرشفة المشروع
+                                        </button>
+                                    </>
                                 )}
                             </Form>
                         )}
@@ -2755,20 +2757,22 @@ export default function ProjectShow({
                                 action={`/projects/${project.id}/restore`}
                                 method="post"
                             >
-                                <input
-                                    type="hidden"
-                                    name="lock_version"
-                                    value={project.lock_version ?? 1}
-                                />
                                 {({ processing }) => (
-                                    <button
-                                        type="submit"
-                                        className="project-secondary-action"
-                                        disabled={processing}
-                                    >
-                                        <Archive aria-hidden="true" />
-                                        استعادة المشروع
-                                    </button>
+                                    <>
+                                        <input
+                                            type="hidden"
+                                            name="lock_version"
+                                            value={project.lock_version ?? 1}
+                                        />
+                                        <button
+                                            type="submit"
+                                            className="project-secondary-action"
+                                            disabled={processing}
+                                        >
+                                            <Archive aria-hidden="true" />
+                                            استعادة المشروع
+                                        </button>
+                                    </>
                                 )}
                             </Form>
                         )}
