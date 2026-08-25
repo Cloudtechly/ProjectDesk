@@ -18,7 +18,7 @@ class AuditViewerAssignments extends Command
 
     public function handle(ActivityLogger $logger): int
     {
-        $managerProjects = Project::query()
+        $managerProjects = DB::table('projects')
             ->join('users', 'users.id', '=', 'projects.manager_id')
             ->where('users.global_role', 'viewer')
             ->orderBy('projects.id')
