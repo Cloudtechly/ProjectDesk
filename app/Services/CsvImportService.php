@@ -481,6 +481,7 @@ class CsvImportService
                 ->whereIn('email', $emailChunk)
                 ->where('status', 'active')
                 ->whereNull('archived_at')
+                ->where('global_role', '!=', 'viewer')
                 ->get(['id', 'email']) as $user) {
                 $users[$user->email] = $user;
             }

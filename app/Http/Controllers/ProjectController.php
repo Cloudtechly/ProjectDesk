@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ChangeProjectArchiveStateRequest;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Client;
@@ -113,6 +114,7 @@ class ProjectController extends Controller
                     'startDate' => $project->start_date?->toDateString(),
                     'endDate' => $project->end_date?->toDateString(),
                     'archivedAt' => $project->archived_at?->toIso8601String(),
+                    'lockVersion' => $project->lock_version,
                     'canRestore' => $user->can('restore', $project),
                 ];
             });
@@ -142,7 +144,7 @@ class ProjectController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name']),
             'members' => $user->can('create', Project::class)
-                ? User::query()->where('status', 'active')->whereNull('archived_at')->orderBy('name')->get(['id', 'name'])
+                ? User::query()->where('status', 'active')->whereNull('archived_at')->orderBy('name')->get(['id', 'name', 'global_role'])
                 : [],
             'canCreate' => $user->can('create', Project::class),
         ]);
@@ -390,7 +392,7 @@ class ProjectController extends Controller
                     ->orderBy('name')->get(['id', 'name'])
                 : [],
             'availableMembers' => $canManage
-                ? User::query()->where('status', 'active')->whereNull('archived_at')->orderBy('name')->get(['id', 'name'])
+                ? User::query()->where('status', 'active')->whereNull('archived_at')->orderBy('name')->get(['id', 'name', 'global_role'])
                 : [],
             'canManage' => $canManage,
             'canArchive' => $user->can('archive', $project),
@@ -401,28 +403,48 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function archive(Request $request, Project $project, ActivityLogger $activityLogger): RedirectResponse
+    public function archive(ChangeProjectArchiveStateRequest $request, Project $project, ActivityLogger $activityLogger): RedirectResponse
     {
-        $this->authorize('archive', $project);
-        $before = $project->toArray();
-        $project->update(['archived_at' => now()]);
         $user = $request->user();
         abort_unless($user instanceof User, 401);
-        $activityLogger->record($project, 'project.archived', $user, $before, $project->toArray(), $request);
+
+        DB::transaction(function () use ($request, $project, $user, $activityLogger): void {
+            $lockedProject = Project::query()->lockForUpdate()->findOrFail($project->id);
+            if ($lockedProject->lock_version !== $request->integer('lock_version')) {
+                abort(409, 'عُدّلت بيانات المشروع في جلسة أخرى. حدّث الصفحة ثم أعد المحاولة.');
+            }
+
+            $before = $lockedProject->toArray();
+            $lockedProject->update([
+                'archived_at' => now(),
+                'lock_version' => $lockedProject->lock_version + 1,
+            ]);
+            $activityLogger->record($lockedProject, 'project.archived', $user, $before, $lockedProject->toArray(), $request);
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'تمت أرشفة المشروع مع الاحتفاظ بسجله.']);
 
         return to_route('projects.index');
     }
 
-    public function restore(Request $request, Project $project, ActivityLogger $activityLogger): RedirectResponse
+    public function restore(ChangeProjectArchiveStateRequest $request, Project $project, ActivityLogger $activityLogger): RedirectResponse
     {
-        $this->authorize('restore', $project);
-        $before = $project->toArray();
-        $project->update(['archived_at' => null, 'lock_version' => $project->lock_version + 1]);
         $user = $request->user();
         abort_unless($user instanceof User, 401);
-        $activityLogger->record($project, 'project.restored', $user, $before, $project->toArray(), $request);
+
+        DB::transaction(function () use ($request, $project, $user, $activityLogger): void {
+            $lockedProject = Project::query()->lockForUpdate()->findOrFail($project->id);
+            if ($lockedProject->lock_version !== $request->integer('lock_version')) {
+                abort(409, 'عُدّلت بيانات المشروع في جلسة أخرى. حدّث الصفحة ثم أعد المحاولة.');
+            }
+
+            $before = $lockedProject->toArray();
+            $lockedProject->update([
+                'archived_at' => null,
+                'lock_version' => $lockedProject->lock_version + 1,
+            ]);
+            $activityLogger->record($lockedProject, 'project.restored', $user, $before, $lockedProject->toArray(), $request);
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'تمت استعادة المشروع وأصبح نشطاً من جديد.']);
 

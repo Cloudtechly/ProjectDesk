@@ -489,6 +489,12 @@ export const backendUiEnglish: Record<string, string> = {
         'An invoice template can only be created as a draft.',
     'يوجد عميل مؤرشف بهذا الرمز ولا يمكن إحياؤه عبر الاستيراد.':
         'An archived client uses this code and cannot be reactivated through import.',
+    'المستخدم ذو الصلاحية العامة «مشاهد» لا يمكن تعيينه مديراً للمشروع.':
+        'A user with the global Viewer role cannot be assigned as project manager.',
+    'المستخدم ذو الصلاحية العامة «مشاهد» لا يمكن منحه دوراً تنفيذياً داخل المشروع.':
+        'A user with the global Viewer role cannot receive a mutating project role.',
+    'المستخدم ذو الصلاحية العامة «مشاهد» للقراءة فقط ولا يمكن إسناد مهمة إليه.':
+        'A user with the global Viewer role is read-only and cannot be assigned a task.',
 
     // Default workflow-status and priority labels returned as server data.
     تخطيط: 'Planning',

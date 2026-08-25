@@ -109,5 +109,8 @@ class AppServiceProvider extends ServiceProvider
             10,
             (int) config('project-desk.data_center.restore_attempts_per_ten_minutes', 3),
         )->by(($request->user()?->getAuthIdentifier() ?? $request->ip()).'|'.$request->ip()));
+
+        RateLimiter::for('backup-download', fn (Request $request): Limit => Limit::perMinutes(10, 5)
+            ->by(($request->user()?->getAuthIdentifier() ?? $request->ip()).'|'.$request->ip()));
     }
 }

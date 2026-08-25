@@ -227,10 +227,11 @@ class ProjectWorkflowTest extends TestCase
         $project = $this->makeProject($manager);
 
         $this->actingAs($manager)
-            ->post(route('projects.archive', $project))
+            ->post(route('projects.archive', $project), ['lock_version' => $project->lock_version])
             ->assertRedirect(route('projects.index'));
 
-        $this->assertNotNull($project->fresh()->archived_at);
+        $project->refresh();
+        $this->assertNotNull($project->archived_at);
         $this->actingAs($manager)
             ->get(route('projects.index', ['scope' => 'archived']))
             ->assertOk()
@@ -241,7 +242,7 @@ class ProjectWorkflowTest extends TestCase
                 ->where('projects.data.0.canRestore', true));
 
         $this->actingAs($manager)
-            ->post(route('projects.restore', $project))
+            ->post(route('projects.restore', $project), ['lock_version' => $project->lock_version])
             ->assertRedirect(route('projects.show', $project));
 
         $this->assertNull($project->fresh()->archived_at);
@@ -263,9 +264,30 @@ class ProjectWorkflowTest extends TestCase
         $this->assertTrue($admin->can('restore', $project->fresh()));
 
         $this->actingAs($manager)
-            ->post(route('projects.restore', $project))
+            ->post(route('projects.restore', $project), ['lock_version' => $project->lock_version])
             ->assertForbidden();
 
+        $this->assertNotNull($project->fresh()->archived_at);
+    }
+
+    public function test_project_archive_and_restore_reject_stale_lock_versions(): void
+    {
+        $manager = $this->makeUser('project_manager');
+        $project = $this->makeProject($manager);
+
+        $this->actingAs($manager)
+            ->post(route('projects.archive', $project), ['lock_version' => $project->lock_version + 1])
+            ->assertConflict();
+        $this->assertNull($project->fresh()->archived_at);
+
+        $this->actingAs($manager)
+            ->post(route('projects.archive', $project), ['lock_version' => $project->lock_version])
+            ->assertRedirect();
+        $project->refresh();
+
+        $this->actingAs($manager)
+            ->post(route('projects.restore', $project), ['lock_version' => $project->lock_version - 1])
+            ->assertConflict();
         $this->assertNotNull($project->fresh()->archived_at);
     }
 }

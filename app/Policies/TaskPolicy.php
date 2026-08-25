@@ -8,9 +8,13 @@ use App\Models\User;
 
 class TaskPolicy
 {
-    public function before(User $user): ?bool
+    public function before(User $user, string $ability): ?bool
     {
         if ($user->status !== 'active' || $user->archived_at !== null) {
+            return false;
+        }
+
+        if ($user->global_role === 'viewer' && $ability !== 'view') {
             return false;
         }
 

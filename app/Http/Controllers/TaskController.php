@@ -252,6 +252,7 @@ class TaskController extends Controller
             ->with(['members' => fn ($members) => $members
                 ->where('users.status', 'active')
                 ->whereNull('users.archived_at')
+                ->where('users.global_role', '!=', 'viewer')
                 ->where('project_members.status', 'active')
                 ->whereIn('project_members.project_role', ['manager', 'member'])
                 ->orderBy('users.name')])
@@ -323,6 +324,10 @@ class TaskController extends Controller
     /** @return array<int, true> */
     private function manageableProjectIds(User $user): array
     {
+        if ($user->global_role === 'viewer') {
+            return [];
+        }
+
         $query = Project::query()->visibleTo($user)->whereNull('archived_at');
 
         if ($user->global_role !== 'admin') {

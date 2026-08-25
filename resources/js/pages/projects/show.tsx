@@ -307,7 +307,11 @@ type ProjectShowProps = {
         name: string;
         contacts?: Array<{ id: number | string; name: string }>;
     }>;
-    availableMembers?: Array<{ id: number | string; name: string }>;
+    availableMembers?: Array<{
+        id: number | string;
+        name: string;
+        global_role?: string;
+    }>;
     canManage?: boolean;
     canArchive?: boolean;
     canRestore?: boolean;
@@ -540,7 +544,11 @@ function EditProjectDialog({
         name: string;
         contacts?: Array<{ id: number | string; name: string }>;
     }>;
-    members: Array<{ id: number | string; name: string }>;
+    members: Array<{
+        id: number | string;
+        name: string;
+        global_role?: string;
+    }>;
 }) {
     const initialClientId = String(
         project.client_id ||
@@ -698,14 +706,20 @@ function EditProjectDialog({
                                         )}
                                     >
                                         <option value="">غير محدد</option>
-                                        {members.map((member) => (
-                                            <option
-                                                key={member.id}
-                                                value={member.id}
-                                            >
-                                                {member.name}
-                                            </option>
-                                        ))}
+                                        {members
+                                            .filter(
+                                                (member) =>
+                                                    member.global_role !==
+                                                    'viewer',
+                                            )
+                                            .map((member) => (
+                                                <option
+                                                    key={member.id}
+                                                    value={member.id}
+                                                >
+                                                    {member.name}
+                                                </option>
+                                            ))}
                                     </select>
                                     <InputError message={errors.manager_id} />
                                 </label>
@@ -796,12 +810,17 @@ function EditProjectDialog({
                                                 <option value="">
                                                     غير مضاف
                                                 </option>
-                                                <option value="manager">
-                                                    مدير
-                                                </option>
-                                                <option value="member">
-                                                    عضو
-                                                </option>
+                                                {member.global_role !==
+                                                    'viewer' && (
+                                                    <>
+                                                        <option value="manager">
+                                                            مدير
+                                                        </option>
+                                                        <option value="member">
+                                                            عضو
+                                                        </option>
+                                                    </>
+                                                )}
                                                 <option value="viewer">
                                                     مشاهد
                                                 </option>
@@ -2714,6 +2733,11 @@ export default function ProjectShow({
                                     )
                                 }
                             >
+                                <input
+                                    type="hidden"
+                                    name="lock_version"
+                                    value={project.lock_version ?? 1}
+                                />
                                 {({ processing }) => (
                                     <button
                                         type="submit"
@@ -2731,6 +2755,11 @@ export default function ProjectShow({
                                 action={`/projects/${project.id}/restore`}
                                 method="post"
                             >
+                                <input
+                                    type="hidden"
+                                    name="lock_version"
+                                    value={project.lock_version ?? 1}
+                                />
                                 {({ processing }) => (
                                     <button
                                         type="submit"

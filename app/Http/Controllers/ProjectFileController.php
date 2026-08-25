@@ -130,6 +130,7 @@ class ProjectFileController extends Controller
     public function download(FileObject $fileObject, ProjectFileService $service): StreamedResponse
     {
         $this->authorize('download', $fileObject);
+        $response = $service->download($fileObject);
         $user = request()->user();
         if ($user instanceof User) {
             app(ActivityLogger::class)->record(
@@ -141,7 +142,7 @@ class ProjectFileController extends Controller
             );
         }
 
-        return $service->download($fileObject);
+        return $response;
     }
 
     public function archiveLink(

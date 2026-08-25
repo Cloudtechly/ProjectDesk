@@ -53,4 +53,34 @@ class ExistingProjectOnboardingFeatureTest extends TestCase
         ])->assertSessionHasErrors('phases');
         $this->assertDatabaseMissing('projects', ['code' => 'ROLLBACK-1']);
     }
+
+    public function test_existing_project_rejects_a_global_viewer_as_manager(): void
+    {
+        $manager = $this->makeUser('project_manager');
+        $viewer = $this->makeUser('viewer');
+        $status = $this->makeStatus('project', 'viewer-onboarding', 'in_progress');
+
+        $this->actingAs($manager)->post(route('projects.existing.store'), [
+            'project' => [
+                'code' => 'LEGACY-VIEWER',
+                'name' => 'Invalid viewer manager',
+                'manager_id' => $viewer->id,
+                'status_id' => $status->id,
+                'priority' => 'medium',
+                'start_date' => now()->subDay()->toDateString(),
+            ],
+            'transitioned_at' => now()->toDateTimeString(),
+            'members' => [['id' => $viewer->id, 'role' => 'manager']],
+            'phases' => [[
+                'title' => 'Current',
+                'starts_at' => now()->subDay(),
+                'ends_at' => now()->addDay(),
+                'status' => 'in_progress',
+                'weight_percent' => 100,
+                'milestones' => [],
+            ]],
+        ])->assertSessionHasErrors(['project.manager_id', 'members.0.role']);
+
+        $this->assertDatabaseMissing('projects', ['code' => 'LEGACY-VIEWER']);
+    }
 }

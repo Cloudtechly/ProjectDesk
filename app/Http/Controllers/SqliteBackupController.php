@@ -7,6 +7,7 @@ use App\Http\Requests\UploadSqliteBackupRequest;
 use App\Models\DataJob;
 use App\Models\FileObject;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use App\Services\RestoreNonceManager;
 use App\Services\RestoreWriteFence;
 use App\Services\SqliteBackupService;
@@ -88,12 +89,14 @@ class SqliteBackupController extends Controller
         return response()->json(['data' => $result]);
     }
 
-    public function download(FileObject $backup): BinaryFileResponse
+    public function download(Request $request, FileObject $backup, ActivityLogger $activityLogger): BinaryFileResponse
     {
         $this->authorize('restore', $backup);
         abort_unless($backup->scan_status === 'safe' && Storage::disk($backup->disk)->exists($backup->storage_key), 404);
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
 
-        return response()->download(
+        $response = response()->download(
             Storage::disk($backup->disk)->path($backup->storage_key),
             $backup->original_name,
             [
@@ -105,5 +108,12 @@ class SqliteBackupController extends Controller
                 'X-Checksum-SHA256' => $backup->checksum_sha256,
             ],
         );
+        $activityLogger->record($backup, 'database_backup.downloaded', $user, after: [
+            'file_id' => $backup->id,
+            'size_bytes' => $backup->size_bytes,
+            'checksum_sha256' => $backup->checksum_sha256,
+        ], request: $request);
+
+        return $response;
     }
 }

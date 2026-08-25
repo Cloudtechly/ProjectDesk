@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\Client;
 use App\Models\Contact;
 use App\Models\User;
+use App\Services\ProjectAssignmentGuard;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -59,19 +60,24 @@ class StoreProjectRequest extends FormRequest
                 }
             }
 
-            if (! $this->filled('primary_contact_id')) {
-                return;
+            if ($this->filled('primary_contact_id')) {
+                $belongsToClient = Contact::query()
+                    ->whereKey($this->integer('primary_contact_id'))
+                    ->where('client_id', $this->integer('client_id'))
+                    ->where('is_active', true)
+                    ->exists();
+
+                if (! $belongsToClient) {
+                    $validator->errors()->add('primary_contact_id', 'جهة الاتصال المختارة لا تتبع العميل المحدد.');
+                }
             }
 
-            $belongsToClient = Contact::query()
-                ->whereKey($this->integer('primary_contact_id'))
-                ->where('client_id', $this->integer('client_id'))
-                ->where('is_active', true)
-                ->exists();
-
-            if (! $belongsToClient) {
-                $validator->errors()->add('primary_contact_id', 'جهة الاتصال المختارة لا تتبع العميل المحدد.');
-            }
+            app(ProjectAssignmentGuard::class)->addProjectErrors(
+                $validator,
+                $this->input('manager_id'),
+                (array) $this->input('members', []),
+                (array) $this->input('member_ids', []),
+            );
         }];
     }
 }

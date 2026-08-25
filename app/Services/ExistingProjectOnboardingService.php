@@ -13,11 +13,24 @@ use Illuminate\Support\Str;
 
 class ExistingProjectOnboardingService
 {
-    public function __construct(private readonly PhasePlanService $phasePlans, private readonly ActivityLogger $logger) {}
+    public function __construct(
+        private readonly PhasePlanService $phasePlans,
+        private readonly ActivityLogger $logger,
+        private readonly ProjectAssignmentGuard $assignments,
+    ) {}
 
     /** @param array<string, mixed> $payload */
     public function create(array $payload, User $actor): Project
     {
+        $this->assignments->assertAssignments(
+            $payload['project']['manager_id'] ?? null,
+            (array) ($payload['members'] ?? []),
+            array_map(
+                fn (mixed $task): mixed => is_array($task) ? ($task['assignee_id'] ?? null) : null,
+                (array) ($payload['tasks'] ?? []),
+            ),
+        );
+
         return DB::transaction(function () use ($payload, $actor): Project {
             $projectData = $payload['project'];
             $project = Project::query()->create([

@@ -15,6 +15,7 @@ type Option = {
     id: number | string;
     name?: string;
     label?: string;
+    global_role?: string;
     contacts?: Array<{ id: number | string; name: string }>;
 };
 type Phase = {
@@ -353,11 +354,15 @@ export function ExistingProjectDialog({
                                 }
                             >
                                 <option value="">غير محدد</option>
-                                {members.map((item) => (
-                                    <option key={item.id} value={item.id}>
-                                        {item.name}
-                                    </option>
-                                ))}
+                                {members
+                                    .filter(
+                                        (item) => item.global_role !== 'viewer',
+                                    )
+                                    .map((item) => (
+                                        <option key={item.id} value={item.id}>
+                                            {item.name}
+                                        </option>
+                                    ))}
                             </select>
                         </label>
                         <label>
@@ -408,8 +413,14 @@ export function ExistingProjectDialog({
                                     }
                                 >
                                     <option value="">غير مضاف</option>
-                                    <option value="manager">مدير</option>
-                                    <option value="member">عضو</option>
+                                    {member.global_role !== 'viewer' && (
+                                        <>
+                                            <option value="manager">
+                                                مدير
+                                            </option>
+                                            <option value="member">عضو</option>
+                                        </>
+                                    )}
                                     <option value="viewer">مشاهد</option>
                                 </select>
                             </label>

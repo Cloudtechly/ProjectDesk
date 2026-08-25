@@ -3,8 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Models\Project;
+use App\Services\ProjectAssignmentGuard;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreExistingProjectRequest extends FormRequest
 {
@@ -65,5 +67,25 @@ class StoreExistingProjectRequest extends FormRequest
             'issues.*.severity' => ['required', Rule::in(['low', 'medium', 'high', 'critical'])],
             'issues.*.status' => ['required', Rule::in(['open', 'in_progress', 'resolved', 'closed'])],
         ];
+    }
+
+    /** @return array<int, \Closure(Validator): void> */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            $guard = app(ProjectAssignmentGuard::class);
+            $guard->addProjectErrors(
+                $validator,
+                $this->input('project.manager_id'),
+                (array) $this->input('members', []),
+                managerField: 'project.manager_id',
+            );
+
+            foreach ((array) $this->input('tasks', []) as $index => $task) {
+                if (is_array($task)) {
+                    $guard->addAssigneeError($validator, $task['assignee_id'] ?? null, "tasks.{$index}.assignee_id");
+                }
+            }
+        }];
     }
 }

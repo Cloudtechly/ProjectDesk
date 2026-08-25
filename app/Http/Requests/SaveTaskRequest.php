@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\Requirement;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\ProjectAssignmentGuard;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -100,6 +101,7 @@ class SaveTaskRequest extends FormRequest
                     ->whereKey($assigneeId)
                     ->where('status', 'active')
                     ->whereNull('archived_at')
+                    ->where('global_role', '!=', 'viewer')
                     ->exists();
                 $isMember = $isEligibleUser && ($project->manager_id === $assigneeId
                     || $project->members()
@@ -111,6 +113,8 @@ class SaveTaskRequest extends FormRequest
                 if (! $isMember) {
                     $validator->errors()->add('assignee_id', 'المسؤول يجب أن يكون عضواً نشطاً في فريق المشروع.');
                 }
+
+                app(ProjectAssignmentGuard::class)->addAssigneeError($validator, $assigneeId);
             }
 
             if ($this->filled('phase_id')) {

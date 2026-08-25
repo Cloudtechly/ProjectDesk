@@ -110,7 +110,9 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::post('data-center/backups/{backup}/restore', [SqliteBackupController::class, 'restore'])
         ->middleware([RequirePassword::using('password.confirm', 900), 'throttle:backup-restore'])
         ->name('data-center.backups.restore');
-    Route::get('data-center/backups/{backup}/download', [SqliteBackupController::class, 'download'])->name('data-center.backups.download');
+    Route::get('data-center/backups/{backup}/download', [SqliteBackupController::class, 'download'])
+        ->middleware([RequirePassword::using('password.confirm', 900), 'throttle:backup-download'])
+        ->name('data-center.backups.download');
     Route::get('files/{fileObject}/download', [ProjectFileController::class, 'download'])->name('files.download');
 
     Route::scopeBindings()->group(function () {

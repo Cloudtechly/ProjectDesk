@@ -246,16 +246,52 @@ class SqliteBackupControllerTest extends TestCase
                 ->assertJsonPath('data.files_complete', false)
                 ->assertJsonPath('data.checksum_sha256', $backup->checksum_sha256);
 
-            $this->get(route('data-center.backups.download', $backup))
+            $this->actingAs($admin)->withSession(['auth.password_confirmed_at' => time()])
+                ->get(route('data-center.backups.download', $backup))
                 ->assertOk()
                 ->assertHeader('X-Checksum-SHA256', $backup->checksum_sha256)
                 ->assertHeader('Content-Type', 'application/vnd.projectdesk.backup')
                 ->assertHeader('X-Content-Type-Options', 'nosniff');
+            $this->assertDatabaseHas('activity_logs', [
+                'action' => 'database_backup.downloaded',
+                'subject_id' => $backup->id,
+            ]);
         } finally {
             if (file_exists($path)) {
                 unlink($path);
             }
         }
+    }
+
+    public function test_backup_download_requires_recent_password_and_does_not_audit_missing_storage(): void
+    {
+        $admin = $this->makeUser('admin');
+        $backup = FileObject::query()->create([
+            'disk' => 'local',
+            'storage_key' => 'backups/missing.pdesk',
+            'original_name' => 'missing.pdesk',
+            'mime_type' => 'application/vnd.projectdesk.backup',
+            'extension' => 'pdesk',
+            'size_bytes' => 100,
+            'checksum_sha256' => str_repeat('e', 64),
+            'scan_status' => 'safe',
+            'uploaded_by' => $admin->id,
+            'uploaded_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->withHeader('Accept', 'application/json')
+            ->get(route('data-center.backups.download', $backup))
+            ->assertStatus(423);
+
+        $this->actingAs($admin)->withSession(['auth.password_confirmed_at' => time()])
+            ->get(route('data-center.backups.download', $backup))
+            ->assertNotFound();
+
+        $this->assertDatabaseMissing('activity_logs', [
+            'action' => 'database_backup.downloaded',
+            'subject_id' => $backup->id,
+        ]);
     }
 
     public function test_invalid_sqlite_upload_is_rejected_and_never_marked_safe(): void
