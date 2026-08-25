@@ -34,6 +34,9 @@ import {
     TimelineDialog,
 } from '@/components/projects/governance-dialogs';
 import type { RequirementRecord } from '@/components/projects/governance-dialogs';
+import { PhasePlanWorkspace } from '@/components/projects/phase-plan-workspace';
+import { RequirementAnalysisPanel } from '@/components/projects/requirement-analysis-panel';
+import { RequirementTaxonomyPanel } from '@/components/projects/requirement-taxonomy-panel';
 import {
     Dialog,
     DialogContent,
@@ -286,6 +289,10 @@ type ProjectMetrics = {
     overdue_tasks?: number | null;
     high_risks?: number | null;
     health?: string | null;
+    phase_health?: string | null;
+    progress_mode?: string | null;
+    current_phase?: { id: number; title: string; progress: number } | null;
+    next_milestone?: { id: number; title: string; starts_at: string } | null;
 };
 
 type ProjectShowProps = {
@@ -1421,10 +1428,7 @@ export default function ProjectShow({
             );
         }
 
-        if (
-            currentTab.id === 'requirements' &&
-            (project.requirements?.length ?? 0) > 0
-        ) {
+        if (currentTab.id === 'requirements') {
             return (
                 <div className="project-record-list w-full">
                     <header>
@@ -1445,6 +1449,12 @@ export default function ProjectShow({
                             />
                         </div>
                     </header>
+                    {!governanceArchivedMode && (
+                        <RequirementTaxonomyPanel
+                            projectId={project.id}
+                            canManage={canManage}
+                        />
+                    )}
                     <ul aria-live="polite">
                         {project.requirements?.map((requirement) => (
                             <li
@@ -1518,12 +1528,15 @@ export default function ProjectShow({
             );
         }
 
-        if (
-            currentTab.id === 'timeline' &&
-            (project.timeline_entries?.length ?? 0) > 0
-        ) {
+        if (currentTab.id === 'timeline') {
             return (
                 <div className="project-timeline-list">
+                    {!governanceArchivedMode && (
+                        <PhasePlanWorkspace
+                            projectId={project.id}
+                            canManage={canManage}
+                        />
+                    )}
                     <header>
                         <h2 id="project-panel-title">الجدول الزمني للمشروع</h2>
                         {canManage && (
@@ -1551,81 +1564,96 @@ export default function ProjectShow({
                         )}
                     </header>
                     <ol>
-                        {project.timeline_entries?.map((entry) => (
-                            <li key={entry.id}>
-                                <time dateTime={entry.starts_at}>
-                                    {formatDate(entry.starts_at)}
-                                </time>
-                                <div>
-                                    <span>
-                                        {entry.kind === 'meeting'
-                                            ? 'اجتماع'
-                                            : 'مرحلة'}
-                                    </span>
-                                    <strong>{entry.title}</strong>
-                                    <small>
-                                        {entry.status || 'مخطط'}
-                                        {entry.ends_at
-                                            ? ` · حتى ${formatDate(entry.ends_at)}`
-                                            : ''}
-                                    </small>
-                                </div>
-                                {canManage && (
-                                    <GovernanceRecordActions
-                                        archived={Boolean(entry.archived_at)}
-                                        lockVersion={
-                                            entry.kind === 'meeting' &&
-                                            entry.meeting
-                                                ? entry.meeting.lock_version
-                                                : entry.lock_version
-                                        }
-                                        recordLabel={entry.title}
-                                        archiveAction={
-                                            entry.kind === 'meeting' &&
-                                            entry.meeting
-                                                ? `/projects/${project.id}/meetings/${entry.meeting.id}/archive`
-                                                : `/projects/${project.id}/timeline-entries/${entry.id}/archive`
-                                        }
-                                        restoreAction={
-                                            entry.kind === 'meeting' &&
-                                            entry.meeting
-                                                ? `/projects/${project.id}/meetings/${entry.meeting.id}/restore`
-                                                : `/projects/${project.id}/timeline-entries/${entry.id}/restore`
-                                        }
-                                        edit={
-                                            entry.kind === 'meeting' &&
-                                            entry.meeting ? (
-                                                <MeetingDialog
-                                                    projectId={project.id}
-                                                    projectName={project.name}
-                                                    members={members}
-                                                    meeting={{
-                                                        ...entry.meeting,
-                                                        title: entry.title,
-                                                        starts_at:
-                                                            entry.starts_at,
-                                                        ends_at: entry.ends_at,
-                                                        status: entry.status,
-                                                        organizer_id:
-                                                            entry.meeting
-                                                                .organizer_id ??
-                                                            entry.meeting
-                                                                .organizer?.id,
-                                                    }}
-                                                />
-                                            ) : (
-                                                <TimelineDialog
-                                                    projectId={project.id}
-                                                    projectName={project.name}
-                                                    members={members}
-                                                    entry={entry}
-                                                />
-                                            )
-                                        }
-                                    />
-                                )}
-                            </li>
-                        ))}
+                        {project.timeline_entries
+                            ?.filter(
+                                (entry) =>
+                                    !['phase', 'milestone'].includes(
+                                        entry.kind,
+                                    ),
+                            )
+                            .map((entry) => (
+                                <li key={entry.id}>
+                                    <time dateTime={entry.starts_at}>
+                                        {formatDate(entry.starts_at)}
+                                    </time>
+                                    <div>
+                                        <span>
+                                            {entry.kind === 'meeting'
+                                                ? 'اجتماع'
+                                                : 'مرحلة'}
+                                        </span>
+                                        <strong>{entry.title}</strong>
+                                        <small>
+                                            {entry.status || 'مخطط'}
+                                            {entry.ends_at
+                                                ? ` · حتى ${formatDate(entry.ends_at)}`
+                                                : ''}
+                                        </small>
+                                    </div>
+                                    {canManage && (
+                                        <GovernanceRecordActions
+                                            archived={Boolean(
+                                                entry.archived_at,
+                                            )}
+                                            lockVersion={
+                                                entry.kind === 'meeting' &&
+                                                entry.meeting
+                                                    ? entry.meeting.lock_version
+                                                    : entry.lock_version
+                                            }
+                                            recordLabel={entry.title}
+                                            archiveAction={
+                                                entry.kind === 'meeting' &&
+                                                entry.meeting
+                                                    ? `/projects/${project.id}/meetings/${entry.meeting.id}/archive`
+                                                    : `/projects/${project.id}/timeline-entries/${entry.id}/archive`
+                                            }
+                                            restoreAction={
+                                                entry.kind === 'meeting' &&
+                                                entry.meeting
+                                                    ? `/projects/${project.id}/meetings/${entry.meeting.id}/restore`
+                                                    : `/projects/${project.id}/timeline-entries/${entry.id}/restore`
+                                            }
+                                            edit={
+                                                entry.kind === 'meeting' &&
+                                                entry.meeting ? (
+                                                    <MeetingDialog
+                                                        projectId={project.id}
+                                                        projectName={
+                                                            project.name
+                                                        }
+                                                        members={members}
+                                                        meeting={{
+                                                            ...entry.meeting,
+                                                            title: entry.title,
+                                                            starts_at:
+                                                                entry.starts_at,
+                                                            ends_at:
+                                                                entry.ends_at,
+                                                            status: entry.status,
+                                                            organizer_id:
+                                                                entry.meeting
+                                                                    .organizer_id ??
+                                                                entry.meeting
+                                                                    .organizer
+                                                                    ?.id,
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <TimelineDialog
+                                                        projectId={project.id}
+                                                        projectName={
+                                                            project.name
+                                                        }
+                                                        members={members}
+                                                        entry={entry}
+                                                    />
+                                                )
+                                            }
+                                        />
+                                    )}
+                                </li>
+                            ))}
                     </ol>
                 </div>
             );
@@ -2152,6 +2180,12 @@ export default function ProjectShow({
                             </div>
                         )}
                     </section>
+
+                    <RequirementAnalysisPanel
+                        projectId={project.id}
+                        versions={requirementBook?.versions ?? []}
+                        canManage={canManage}
+                    />
 
                     <div className="project-document-grid">
                         <section className="project-files-panel">

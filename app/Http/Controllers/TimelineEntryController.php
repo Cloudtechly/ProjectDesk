@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class TimelineEntryController extends Controller
@@ -57,6 +58,8 @@ class TimelineEntryController extends Controller
         $entry = DB::transaction(function () use ($request, $project, $user, $logger): TimelineEntry {
             $entry = $project->timelineEntries()->create([
                 ...$request->validated(),
+                'completed_at' => $request->validated('status') === 'completed' ? now() : null,
+                'completed_by' => $request->validated('status') === 'completed' ? $user->id : null,
                 'lock_version' => 1,
             ]);
             $logger->record($entry, 'timeline_entry.created', $user, after: $entry->toArray(), request: $request);
@@ -92,6 +95,8 @@ class TimelineEntryController extends Controller
             $before = $locked->toArray();
             $locked->fill([
                 ...$validated,
+                'completed_at' => ($validated['status'] ?? null) === 'completed' ? ($locked->completed_at ?? now()) : null,
+                'completed_by' => ($validated['status'] ?? null) === 'completed' ? ($locked->completed_by ?? $user->id) : null,
                 'lock_version' => $locked->lock_version + 1,
             ])->save();
             $logger->record(
@@ -123,6 +128,11 @@ class TimelineEntryController extends Controller
     ): JsonResponse|RedirectResponse {
         abort_unless($timelineEntry->project_id === $project->id, 404);
         $this->authorize('archive', $timelineEntry);
+        if ($timelineEntry->kind === 'phase' && $project->progress_mode === 'phases') {
+            throw ValidationException::withMessages([
+                'phase' => 'إلغاء أو أرشفة مرحلة يتطلب محرر الخطة الجماعي لإعادة توزيع الأوزان.',
+            ]);
+        }
         $user = $request->user();
         abort_unless($user instanceof User, 401);
         $validated = $request->validate(['lock_version' => ['required', 'integer', 'min:1']]);

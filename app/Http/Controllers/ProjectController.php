@@ -107,6 +107,9 @@ class ProjectController extends Controller
                     'openTasks' => $projectMetrics['open_tasks'],
                     'overdueTasks' => $projectMetrics['overdue_tasks'],
                     'nextStage' => $projectMetrics['next_stage'],
+                    'currentPhase' => $projectMetrics['current_phase'],
+                    'nextMilestone' => $projectMetrics['next_milestone'],
+                    'progressMode' => $projectMetrics['progress_mode'],
                     'startDate' => $project->start_date?->toDateString(),
                     'endDate' => $project->end_date?->toDateString(),
                     'archivedAt' => $project->archived_at?->toIso8601String(),
@@ -123,6 +126,7 @@ class ProjectController extends Controller
                 'scope' => $scope,
             ],
             'statuses' => WorkflowStatus::query()->where('entity_type', 'project')->where('is_active', true)->orderBy('position')->get(),
+            'taskStatuses' => WorkflowStatus::query()->where('entity_type', 'task')->where('is_active', true)->orderBy('position')->get(['id', 'label']),
             'clients' => Client::query()
                 ->when(
                     $user->can('create', Project::class),
@@ -231,7 +235,7 @@ class ProjectController extends Controller
                     fn ($query) => $query->whereNotNull('archived_at'),
                     fn ($query) => $query->whereNull('archived_at'),
                 )
-                ->with(['status', 'owner'])
+                ->with(['status', 'owner', 'group.category', 'sources', 'timelineEntries:id,title,kind'])
                 ->orderBy('code')
                 ->orderBy('id')
                 ->paginate(50, ['*'], 'tab_page')
@@ -246,7 +250,7 @@ class ProjectController extends Controller
                 )
                 ->when($requestedTab === 'meetings', fn ($query) => $query->where('kind', 'meeting'))
                 ->with([
-                    'owner',
+                    'owner', 'parentPhase:id,title', 'milestones', 'tasks.status:id,semantic',
                     'meeting' => fn ($meetings) => $meetings->when(
                         $timelineArchived,
                         fn ($query) => $query->whereNotNull('archived_at'),

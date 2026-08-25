@@ -40,7 +40,10 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
+            // Local document analysis can legitimately run for more than an
+            // hour. This must stay above the worker/job timeout to prevent
+            // the same run from being reserved by a second worker.
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 7500),
             'after_commit' => false,
         ],
 

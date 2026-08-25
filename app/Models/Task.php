@@ -29,7 +29,7 @@ use Illuminate\Support\Carbon;
 class Task extends Model
 {
     protected $fillable = [
-        'project_id', 'code', 'title', 'description', 'status_id', 'priority', 'assignee_id',
+        'project_id', 'phase_id', 'code', 'title', 'description', 'status_id', 'priority', 'assignee_id',
         'assigned_at', 'start_at', 'due_at', 'completed_at', 'estimated_minutes', 'notes',
         'lock_version', 'archived_at',
     ];
@@ -63,6 +63,12 @@ class Task extends Model
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assignee_id');
+    }
+
+    /** @return BelongsTo<TimelineEntry, $this> */
+    public function phase(): BelongsTo
+    {
+        return $this->belongsTo(TimelineEntry::class, 'phase_id');
     }
 
     /** @return BelongsToMany<Requirement, $this> */

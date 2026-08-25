@@ -9,7 +9,7 @@ import {
     Plus,
     ShieldAlert,
 } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import InputError from '@/components/input-error';
 import {
     Dialog,
@@ -20,6 +20,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { useUnsavedDialog } from '@/hooks/use-unsaved-changes';
+import { projectApi } from './project-api';
 
 type Member = {
     id: number | string;
@@ -38,6 +39,13 @@ export type RequirementRecord = {
     description?: string | null;
     acceptance_criteria?: string | null;
     priority?: string;
+    type?: string;
+    group_id?: number | string | null;
+    timeline_entries?: Array<{
+        id: number | string;
+        title: string;
+        kind: string;
+    }>;
     status_id?: number | string | null;
     owner_id?: number | string | null;
     lock_version: number;
@@ -205,6 +213,57 @@ export function RequirementDialog({
     const titleId = useId();
     const codeId = useId();
     const statusId = useId();
+    const [groups, setGroups] = useState<
+        Array<{ id: number; name: string; category: string }>
+    >([]);
+    const [timelineEntries, setTimelineEntries] = useState<
+        Array<{ id: number; title: string; kind: string }>
+    >([]);
+
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        void projectApi<{
+            categories: Array<{
+                name: string;
+                groups: Array<{ id: number; name: string }>;
+            }>;
+        }>(`/projects/${projectId}/requirement-taxonomy`)
+            .then((tree) => {
+                setGroups(
+                    tree.categories.flatMap((category) =>
+                        category.groups.map((group) => ({
+                            id: group.id,
+                            name: group.name,
+                            category: category.name,
+                        })),
+                    ),
+                );
+            })
+            .catch(() => setGroups([]));
+        void projectApi<{
+            phases: Array<{
+                id: number;
+                title: string;
+                milestones: Array<{ id: number; title: string }>;
+            }>;
+        }>(`/projects/${projectId}/phase-plan`)
+            .then((plan) => {
+                setTimelineEntries(
+                    plan.phases.flatMap((phase) => [
+                        { id: phase.id, title: phase.title, kind: 'phase' },
+                        ...phase.milestones.map((milestone) => ({
+                            id: milestone.id,
+                            title: milestone.title,
+                            kind: 'milestone',
+                        })),
+                    ]),
+                );
+            })
+            .catch(() => setTimelineEntries([]));
+    }, [open, projectId]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -309,6 +368,53 @@ export function RequirementDialog({
                                         <option value="critical">حرجة</option>
                                     </select>
                                 </label>
+                                <label>
+                                    <span>نوع المتطلب</span>
+                                    <select
+                                        name="type"
+                                        required
+                                        defaultValue={
+                                            requirement?.type || 'functional'
+                                        }
+                                    >
+                                        <option value="functional">
+                                            وظيفي
+                                        </option>
+                                        <option value="technical">تقني</option>
+                                        <option value="non_functional">
+                                            غير وظيفي
+                                        </option>
+                                        <option value="security">أمني</option>
+                                        <option value="data">بيانات</option>
+                                        <option value="integration">
+                                            تكامل
+                                        </option>
+                                        <option value="business">أعمال</option>
+                                    </select>
+                                    <InputError message={errors.type} />
+                                </label>
+                                <label>
+                                    <span>فئة ومجموعة المتطلب</span>
+                                    <select
+                                        name="group_id"
+                                        defaultValue={
+                                            requirement?.group_id
+                                                ? String(requirement.group_id)
+                                                : ''
+                                        }
+                                    >
+                                        <option value="">غير مصنف</option>
+                                        {groups.map((group) => (
+                                            <option
+                                                key={group.id}
+                                                value={group.id}
+                                            >
+                                                {group.category} / {group.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <InputError message={errors.group_id} />
+                                </label>
                                 <label htmlFor={statusId}>
                                     <span>الحالة</span>
                                     <select
@@ -350,6 +456,45 @@ export function RequirementDialog({
                                     defaultValue={requirement?.owner_id || ''}
                                 />
                             </div>
+                            {timelineEntries.length > 0 && (
+                                <fieldset className="task-requirements-picker">
+                                    <input
+                                        type="hidden"
+                                        name="timeline_links_submitted"
+                                        value="1"
+                                    />
+                                    <legend>
+                                        ربط المتطلب بالمراحل والمعالم
+                                    </legend>
+                                    <div>
+                                        {timelineEntries.map((entry) => (
+                                            <label key={entry.id}>
+                                                <input
+                                                    type="checkbox"
+                                                    name="timeline_entry_ids[]"
+                                                    value={entry.id}
+                                                    defaultChecked={requirement?.timeline_entries?.some(
+                                                        (current) =>
+                                                            String(
+                                                                current.id,
+                                                            ) ===
+                                                            String(entry.id),
+                                                    )}
+                                                />
+                                                <span>
+                                                    {entry.kind === 'phase'
+                                                        ? 'مرحلة'
+                                                        : 'معلم'}
+                                                    : {entry.title}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError
+                                        message={errors.timeline_entry_ids}
+                                    />
+                                </fieldset>
+                            )}
                             <label>
                                 <span>الوصف</span>
                                 <textarea
@@ -711,7 +856,7 @@ export function TimelineDialog({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogAction
-                label={entry ? 'تعديل البند' : 'إضافة موعد أو مرحلة'}
+                label={entry ? 'تعديل البند' : 'إضافة موعد أو معلم'}
                 icon={entry ? Pencil : Flag}
             />
             <DialogContent className="cloudtech-dialog" dir="rtl">
@@ -723,7 +868,8 @@ export function TimelineDialog({
                             : 'بند في الجدول الزمني'}
                     </DialogTitle>
                     <DialogDescription>
-                        أضف مرحلة أو تسليماً أو مراجعة بتاريخ فعلي.
+                        أضف معلمًا أو تسليمًا أو مراجعة بتاريخ فعلي. تُدار
+                        المراحل الموزونة من محرر الخطة.
                     </DialogDescription>
                 </DialogHeader>
                 <Form
@@ -764,8 +910,9 @@ export function TimelineDialog({
                                             entry?.kind ?? 'milestone'
                                         }
                                     >
-                                        <option value="milestone">مرحلة</option>
-                                        <option value="phase">طور عمل</option>
+                                        <option value="milestone">
+                                            Milestone / معلم
+                                        </option>
                                         <option value="delivery">تسليم</option>
                                         <option value="review">مراجعة</option>
                                         <option value="deadline">

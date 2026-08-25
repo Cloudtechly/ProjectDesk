@@ -11,6 +11,7 @@ import { useId, useState } from 'react';
 import InputError from '@/components/input-error';
 import { PageEmptyState } from '@/components/page-empty-state';
 import { PaginationLinks } from '@/components/pagination-links';
+import { ExistingProjectDialog } from '@/components/projects/existing-project-dialog';
 import {
     Dialog,
     DialogContent,
@@ -44,6 +45,16 @@ type Project = {
         title: string;
         kind?: string | null;
         status?: string | null;
+        starts_at?: string | null;
+    } | null;
+    currentPhase?: {
+        id: number | string;
+        title: string;
+        progress?: number;
+    } | null;
+    nextMilestone?: {
+        id: number | string;
+        title: string;
         starts_at?: string | null;
     } | null;
     startDate?: string | null;
@@ -82,6 +93,7 @@ type ProjectsProps = {
         health?: string;
     };
     statuses?: Option[];
+    taskStatuses?: Option[];
     clients?: Option[];
     members?: Option[];
     canCreate?: boolean;
@@ -504,6 +516,7 @@ export default function ProjectsIndex({
     projects,
     filters,
     statuses = [],
+    taskStatuses = [],
     clients = [],
     members = [],
     canCreate = false,
@@ -540,13 +553,21 @@ export default function ProjectsIndex({
                             تصدير Excel
                         </a>
                         {canCreate && (
-                            <CreateProjectDialog
-                                statuses={statuses}
-                                clients={clients}
-                                members={members}
-                                initialClientId={requestedClientId}
-                                defaultOpen={openCreateFromContext}
-                            />
+                            <>
+                                <ExistingProjectDialog
+                                    statuses={statuses}
+                                    taskStatuses={taskStatuses}
+                                    clients={clients}
+                                    members={members}
+                                />
+                                <CreateProjectDialog
+                                    statuses={statuses}
+                                    clients={clients}
+                                    members={members}
+                                    initialClientId={requestedClientId}
+                                    defaultOpen={openCreateFromContext}
+                                />
+                            </>
                         )}
                     </div>
                 </header>
@@ -819,20 +840,29 @@ export default function ProjectsIndex({
                                                     </span>
                                                 </td>
                                                 <td data-label="المرحلة القادمة">
-                                                    {project.nextStage ? (
+                                                    {project.nextMilestone ||
+                                                    project.currentPhase ||
+                                                    project.nextStage ? (
                                                         <span className="table-next-stage">
                                                             <strong>
-                                                                {
+                                                                {project
+                                                                    .nextMilestone
+                                                                    ?.title ||
+                                                                    project
+                                                                        .currentPhase
+                                                                        ?.title ||
                                                                     project
                                                                         .nextStage
-                                                                        .title
-                                                                }
+                                                                        ?.title}
                                                             </strong>
                                                             <small>
                                                                 {formatDate(
                                                                     project
-                                                                        .nextStage
-                                                                        .starts_at,
+                                                                        .nextMilestone
+                                                                        ?.starts_at ||
+                                                                        project
+                                                                            .nextStage
+                                                                            ?.starts_at,
                                                                 )}
                                                             </small>
                                                         </span>

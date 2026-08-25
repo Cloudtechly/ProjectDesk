@@ -6,6 +6,7 @@ import {
 } from './browser-runtime.mjs';
 
 const baseURL = process.env.APP_URL || 'http://127.0.0.1:8000';
+const applicationName = process.env.BROWSER_APP_NAME || 'Project Desk';
 const routes = [
     { path: '/dashboard', heading: 'Dashboard', title: 'Dashboard' },
     { path: '/projects', heading: 'Projects', title: 'Projects' },
@@ -391,9 +392,9 @@ async function auditAuthenticatedEnglishRoutes(browser, storageState) {
 
                     const title = await page.title();
 
-                    if (title !== `${route.title} - Project Desk`) {
+                    if (title !== `${route.title} - ${applicationName}`) {
                         throw new Error(
-                            `${label}: expected document title "${route.title} - Project Desk", got "${title}"`,
+                            `${label}: expected document title "${route.title} - ${applicationName}", got "${title}"`,
                         );
                     }
 

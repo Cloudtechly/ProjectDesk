@@ -57,6 +57,7 @@ type Task = {
     description?: string | null;
     status_id?: number | string;
     project_id?: number | string;
+    phase_id?: number | string | null;
     assignee_id?: number | string | null;
     lock_version?: number;
     can_update?: boolean;
@@ -87,6 +88,10 @@ type TasksProps = {
     members?: Relation[];
     projectMembers?: Record<string, Relation[]>;
     projectRequirements?: Record<string, Requirement[]>;
+    projectPhases?: Record<
+        string,
+        Array<{ id: number | string; title: string }>
+    >;
     statuses?: Relation[];
     openCreate?: boolean;
     selectedProjectId?: number | string | null;
@@ -196,6 +201,7 @@ function TaskForm({
     members = [],
     projectMembers = {},
     projectRequirements = {},
+    projectPhases = {},
     statuses = [],
     selectedProjectId,
     task,
@@ -207,6 +213,7 @@ function TaskForm({
     | 'members'
     | 'projectMembers'
     | 'projectRequirements'
+    | 'projectPhases'
     | 'statuses'
     | 'selectedProjectId'
 > & {
@@ -234,6 +241,7 @@ function TaskForm({
     const availableMembers = projectMembers[String(selectedProject)] ?? members;
     const availableRequirements =
         projectRequirements[String(selectedProject)] ?? [];
+    const availablePhases = projectPhases[String(selectedProject)] ?? [];
     const selectedRequirements = availableRequirements.filter((requirement) =>
         selectedRequirementIds.has(String(requirement.id)),
     );
@@ -334,6 +342,23 @@ function TaskForm({
                             </small>
                         )}
                         <InputError message={errors.project_id} />
+                    </label>
+                    <label>
+                        <span>المرحلة الأساسية (اختيارية)</span>
+                        <select
+                            name="phase_id"
+                            defaultValue={
+                                task?.phase_id ? String(task.phase_id) : ''
+                            }
+                        >
+                            <option value="">دون مرحلة</option>
+                            {availablePhases.map((phase) => (
+                                <option key={phase.id} value={phase.id}>
+                                    {phase.title}
+                                </option>
+                            ))}
+                        </select>
+                        <InputError message={errors.phase_id} />
                     </label>
                     <label>
                         <span>عنوان المهمة</span>
@@ -898,6 +923,7 @@ export default function TasksIndex({
     members = [],
     projectMembers = {},
     projectRequirements = {},
+    projectPhases = {},
     statuses = [],
     openCreate = false,
     selectedProjectId,
@@ -1365,6 +1391,7 @@ export default function TasksIndex({
                         members={members}
                         projectMembers={projectMembers}
                         projectRequirements={projectRequirements}
+                        projectPhases={projectPhases}
                         statuses={statuses}
                         selectedProjectId={selectedProjectId}
                         onDirtyChange={setTaskFormDirty}
@@ -1395,6 +1422,7 @@ export default function TasksIndex({
                         members={members}
                         projectMembers={projectMembers}
                         projectRequirements={projectRequirements}
+                        projectPhases={projectPhases}
                         statuses={statuses}
                         task={editingTask}
                         onDirtyChange={setTaskFormDirty}

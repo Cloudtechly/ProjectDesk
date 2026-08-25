@@ -171,6 +171,37 @@ export const settingsEnglish: Record<string, string> = {
     'ينفذ النسخ عبر مجدول النظام في الوقت المحدد':
         'Backups run through the system scheduler at the specified time',
     يومي: 'Daily',
+    'الذكاء الاصطناعي المحلي': 'Local AI',
+    'Ollama وOCR دون خدمات سحابية': 'Ollama and OCR without cloud services',
+    'تعذر اختبار المحرك المحلي.': 'Could not test the local engine.',
+    'معالم التسليم': 'Delivery milestones',
+    'تنبيه قبل 14 و7 و3 أيام وعند التأخر':
+        'Notify 14, 7, and 3 days before, and when overdue',
+    'تحليل PDF وDOCX على هذا الجهاز عبر Ollama؛ لا توجد مفاتيح API أو خدمات سحابية.':
+        'Analyze PDF and DOCX files on this device through Ollama; no API keys or cloud services.',
+    'تفعيل التحليل المحلي': 'Enable local analysis',
+    'يسمح لمدير المشروع ببدء التحليل والمراجعة البشرية.':
+        'Allows project managers to start analysis and human review.',
+    'التحليل التلقائي بعد الرفع': 'Automatically analyze after upload',
+    'يبدأ بعد اجتياز فحص الملف، ويمكن إيقافه أو إعادة تشغيله.':
+        'Starts after the file passes validation and can be stopped or retried.',
+    'نموذج Ollama': 'Ollama model',
+    'حجم السياق': 'Context size',
+    '8192 (موصى به)': '8192 (recommended)',
+    'حد الصفحات': 'Page limit',
+    'حالة المكونات المحلية': 'Local components status',
+    'جارٍ الاختبار…': 'Testing…',
+    'اختبار محلي': 'Local test',
+    'متصل على 127.0.0.1:11434': 'Connected at 127.0.0.1:11434',
+    'غير متصل': 'Not connected',
+    النموذج: 'Model',
+    مثبت: 'Installed',
+    'غير مثبت': 'Not installed',
+    'غير مكتشف': 'Not detected',
+    جاهز: 'Ready',
+    ناقص: 'Missing',
+    'الاتصال السحابي': 'Cloud connection',
+    'معطل دائمًا': 'Always disabled',
 };
 
 export const settingsPatterns: Array<{
@@ -188,5 +219,9 @@ export const settingsPatterns: Array<{
     {
         source: /^نقل (.+) للأعلى$/u,
         target: 'Move $1 up',
+    },
+    {
+        source: /^(.+) · (.+)MB متاح$/u,
+        target: '$1 · $2MB available',
     },
 ];

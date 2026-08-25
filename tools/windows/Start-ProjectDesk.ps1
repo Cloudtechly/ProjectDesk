@@ -173,10 +173,11 @@ try {
     Start-ProjectProcess -Name 'queue' -Arguments @(
         'queue:work',
         'database',
+        '--queue=local-ai,default',
         '--sleep=3',
         '--tries=3',
-        '--timeout=120',
-        '--memory=256',
+        '--timeout=7200',
+        '--memory=512',
         '--no-interaction'
     )
 

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -20,7 +21,7 @@ use Illuminate\Support\Carbon;
 class Requirement extends Model
 {
     protected $fillable = [
-        'project_id', 'code', 'title', 'description', 'acceptance_criteria', 'priority',
+        'project_id', 'group_id', 'code', 'title', 'description', 'acceptance_criteria', 'type', 'priority',
         'status_id', 'owner_id', 'lock_version', 'archived_at',
     ];
 
@@ -51,5 +52,35 @@ class Requirement extends Model
     public function tasks(): BelongsToMany
     {
         return $this->belongsToMany(Task::class);
+    }
+
+    /** @return BelongsTo<RequirementGroup, $this> */
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(RequirementGroup::class);
+    }
+
+    /** @return BelongsToMany<TimelineEntry, $this> */
+    public function timelineEntries(): BelongsToMany
+    {
+        return $this->belongsToMany(TimelineEntry::class, 'requirement_timeline_entry')->withTimestamps();
+    }
+
+    /** @return HasMany<RequirementRelation, $this> */
+    public function outgoingRelations(): HasMany
+    {
+        return $this->hasMany(RequirementRelation::class, 'source_requirement_id');
+    }
+
+    /** @return HasMany<RequirementRelation, $this> */
+    public function incomingRelations(): HasMany
+    {
+        return $this->hasMany(RequirementRelation::class, 'target_requirement_id');
+    }
+
+    /** @return HasMany<RequirementSource, $this> */
+    public function sources(): HasMany
+    {
+        return $this->hasMany(RequirementSource::class);
     }
 }

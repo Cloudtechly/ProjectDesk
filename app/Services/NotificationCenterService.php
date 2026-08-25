@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Meeting;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\TimelineEntry;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\DatabaseNotification;
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * @phpstan-type NotificationData array{
- *     source_type: 'task'|'meeting',
+ *     source_type: 'task'|'meeting'|'milestone',
  *     source_id: int,
  *     tone: 'danger'|'warning'|'info',
  *     label: string,
@@ -26,7 +27,7 @@ use Illuminate\Support\Facades\DB;
  * }
  * @phpstan-type NotificationItem array{
  *     id: string,
- *     type: 'task'|'meeting',
+ *     type: 'task'|'meeting'|'milestone',
  *     tone: 'danger'|'warning'|'info',
  *     label: string,
  *     title: string,
@@ -177,7 +178,7 @@ class NotificationCenterService
      * Personal choices default to enabled and may only shorten the system
      * lead window. They cannot enable a category disabled by an administrator.
      *
-     * @return array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, lead_hours: int}
+     * @return array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, milestones: bool, lead_hours: int}
      */
     public function personalPreferences(User $user): array
     {
@@ -187,8 +188,8 @@ class NotificationCenterService
     }
 
     /**
-     * @param  array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, lead_hours: int}  $system
-     * @return array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, lead_hours: int}
+     * @param  array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, milestones: bool, lead_hours: int}  $system
+     * @return array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, milestones: bool, lead_hours: int}
      */
     private function normalizePersonalPreferences(User $user, array $system): array
     {
@@ -202,6 +203,7 @@ class NotificationCenterService
             'overdue_tasks' => (bool) ($stored['overdue_tasks'] ?? true),
             'upcoming_tasks' => (bool) ($stored['upcoming_tasks'] ?? true),
             'meetings' => (bool) ($stored['meetings'] ?? true),
+            'milestones' => $system['milestones'],
             'lead_hours' => max(1, min($system['lead_hours'], $storedLeadHours)),
         ];
     }
@@ -257,6 +259,23 @@ class NotificationCenterService
                 ], false);
         }
 
+        if ($data['source_type'] === 'milestone') {
+            $milestone = TimelineEntry::query()->with('project')->where('kind', 'milestone')->find($data['source_id']);
+            if (! $milestone instanceof TimelineEntry || $milestone->archived_at !== null
+                || $milestone->project->archived_at !== null
+                || in_array($milestone->status, ['completed', 'cancelled'], true)
+                || ! $user->can('view', $milestone->project)) {
+                return null;
+            }
+            $days = (int) Date::now()->startOfDay()->diffInDays($milestone->starts_at->copy()->startOfDay(), false);
+            if (($days >= 0 && ! in_array($days, [14, 7, 3], true))
+                || $data['scheduled_at'] !== $milestone->starts_at->toIso8601String()) {
+                return null;
+            }
+
+            return route('projects.show', ['project' => $milestone->project_id, 'tab' => 'timeline'], false);
+        }
+
         $meeting = Meeting::query()
             ->with('timelineEntry.project')
             ->find($data['source_id']);
@@ -282,7 +301,7 @@ class NotificationCenterService
     }
 
     /**
-     * @param  array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, lead_hours: int}  $preferences
+     * @param  array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, milestones: bool, lead_hours: int}  $preferences
      * @param  array{created: int, updated: int, deleted: int, users: int}  $summary
      */
     private function syncUser(User $user, array $preferences, array &$summary): void
@@ -348,7 +367,7 @@ class NotificationCenterService
     }
 
     /**
-     * @param  array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, lead_hours: int}  $preferences
+     * @param  array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, milestones: bool, lead_hours: int}  $preferences
      * @return array<string, NotificationData>
      */
     private function candidates(User $user, array $preferences): array
@@ -418,6 +437,37 @@ class NotificationCenterService
             }
         }
 
+        if ($preferences['milestones'] === true) {
+            $milestones = TimelineEntry::query()
+                ->where('kind', 'milestone')
+                ->whereNull('archived_at')
+                ->whereIn('project_id', $this->visibleProjectIds($user))
+                ->whereNotIn('status', ['completed', 'cancelled'])
+                ->where('starts_at', '<=', $now->copy()->addDays(15))
+                ->with('project:id,code,name,archived_at')
+                ->orderBy('id')
+                ->get();
+
+            foreach ($milestones as $milestone) {
+                $days = (int) $now->copy()->startOfDay()->diffInDays($milestone->starts_at->copy()->startOfDay(), false);
+                if ($days >= 0 && ! in_array($days, [14, 7, 3], true)) {
+                    continue;
+                }
+                $bucket = $days < 0 ? 'overdue' : (string) $days;
+                $data = [
+                    'source_type' => 'milestone',
+                    'source_id' => $milestone->id,
+                    'tone' => $days < 0 ? 'danger' : 'warning',
+                    'label' => $days < 0 ? 'Milestone متأخر' : "Milestone خلال {$days} أيام",
+                    'title' => $milestone->title,
+                    'project' => $milestone->project->name,
+                    'project_code' => $milestone->project->code,
+                    'scheduled_at' => $milestone->starts_at->toIso8601String(),
+                ];
+                $items[$this->stableId($user, 'milestone:'.$bucket, $milestone->id)] = $this->withFingerprint($data);
+            }
+        }
+
         return $items;
     }
 
@@ -442,7 +492,7 @@ class NotificationCenterService
     }
 
     /**
-     * @param  array{source_type: 'task'|'meeting', source_id: int, tone: 'danger'|'warning'|'info', label: string, title: string, project: string, project_code: string, scheduled_at: string}  $data
+     * @param  array{source_type: 'task'|'meeting'|'milestone', source_id: int, tone: 'danger'|'warning'|'info', label: string, title: string, project: string, project_code: string, scheduled_at: string}  $data
      * @return NotificationData
      */
     private function withFingerprint(array $data): array
@@ -477,7 +527,7 @@ class NotificationCenterService
         );
     }
 
-    /** @return array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, lead_hours: int} */
+    /** @return array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, milestones: bool, lead_hours: int} */
     private function systemPreferences(): array
     {
         $preferences = $this->settings->group('notifications');
@@ -487,13 +537,14 @@ class NotificationCenterService
             'overdue_tasks' => (bool) ($preferences['overdue_tasks'] ?? true),
             'upcoming_tasks' => (bool) ($preferences['upcoming_tasks'] ?? true),
             'meetings' => (bool) ($preferences['meetings'] ?? true),
+            'milestones' => (bool) ($preferences['milestones'] ?? true),
             'lead_hours' => max(1, min(168, (int) ($preferences['lead_hours'] ?? 24))),
         ];
     }
 
     /**
-     * @param  array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, lead_hours: int}  $system
-     * @return array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, lead_hours: int}
+     * @param  array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, milestones: bool, lead_hours: int}  $system
+     * @return array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, milestones: bool, lead_hours: int}
      */
     private function effectivePreferences(User $user, array $system): array
     {
@@ -504,6 +555,7 @@ class NotificationCenterService
             'overdue_tasks' => $system['overdue_tasks'] && $personal['overdue_tasks'],
             'upcoming_tasks' => $system['upcoming_tasks'] && $personal['upcoming_tasks'],
             'meetings' => $system['meetings'] && $personal['meetings'],
+            'milestones' => $system['milestones'],
             'lead_hours' => min($system['lead_hours'], $personal['lead_hours']),
         ];
     }
@@ -511,7 +563,7 @@ class NotificationCenterService
     /** @param array<string, mixed> $data */
     private function validData(array $data): bool
     {
-        return in_array($data['source_type'] ?? null, ['task', 'meeting'], true)
+        return in_array($data['source_type'] ?? null, ['task', 'meeting', 'milestone'], true)
             && is_int($data['source_id'] ?? null)
             && in_array($data['tone'] ?? null, ['danger', 'warning', 'info'], true)
             && is_string($data['label'] ?? null)
@@ -524,7 +576,7 @@ class NotificationCenterService
 
     /**
      * @param  array<string, mixed>  $data
-     * @param  array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, lead_hours: int}  $preferences
+     * @param  array{enabled: bool, overdue_tasks: bool, upcoming_tasks: bool, meetings: bool, milestones: bool, lead_hours: int}  $preferences
      */
     private function matchesPreferences(array $data, array $preferences): bool
     {
@@ -542,6 +594,15 @@ class NotificationCenterService
 
         if ($data['source_type'] === 'meeting' && ! $preferences['meetings']) {
             return false;
+        }
+
+        if ($data['source_type'] === 'milestone') {
+            if (! $preferences['milestones']) {
+                return false;
+            }
+            $days = (int) Date::now()->startOfDay()->diffInDays(Date::parse($data['scheduled_at'])->startOfDay(), false);
+
+            return $days < 0 || in_array($days, [14, 7, 3], true);
         }
 
         $scheduledAt = Date::parse($data['scheduled_at']);

@@ -39,6 +39,7 @@ class SystemSettingsService
             'overdue_tasks' => true,
             'upcoming_tasks' => true,
             'meetings' => true,
+            'milestones' => true,
             'lead_hours' => 24,
         ],
         'automatic_backup' => [
@@ -50,6 +51,13 @@ class SystemSettingsService
         'calendar' => [
             'week_start' => 0,
             'weekend_days' => [5, 6],
+        ],
+        'local_ai' => [
+            'enabled' => false,
+            'auto_analyze' => false,
+            'model' => 'qwen3:8b-q4_K_M',
+            'context_size' => 8192,
+            'max_pages' => 300,
         ],
     ];
 

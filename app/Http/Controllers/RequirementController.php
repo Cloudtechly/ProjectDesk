@@ -34,7 +34,7 @@ class RequirementController extends Controller
         abort_unless($requirement->project_id === $project->id, 404);
         $this->authorize('view', $requirement);
 
-        return response()->json(['data' => $requirement->load(['status', 'owner', 'tasks:id,code,title'])]);
+        return response()->json(['data' => $requirement->load(['status', 'owner', 'tasks:id,code,title', 'timelineEntries:id,title,kind'])]);
     }
 
     public function store(

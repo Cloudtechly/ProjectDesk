@@ -24,6 +24,47 @@ class GovernanceResourcesTest extends TestCase
         $this->registerGovernanceRoutes();
     }
 
+    public function test_requirement_can_remove_all_phase_and_milestone_links(): void
+    {
+        $manager = $this->makeUser('project_manager');
+        $project = $this->makeProject($manager);
+        $status = $this->makeStatus('requirement', 'link-removal-draft', 'open');
+        $phase = TimelineEntry::query()->create([
+            'project_id' => $project->id,
+            'kind' => 'phase',
+            'title' => 'مرحلة التحليل',
+            'starts_at' => now(),
+            'ends_at' => now()->addWeek(),
+            'status' => 'in_progress',
+            'weight_percent' => 100,
+        ]);
+        $requirement = Requirement::query()->create([
+            'project_id' => $project->id,
+            'code' => 'REQ-LINKED',
+            'title' => 'متطلب مرتبط',
+            'priority' => 'medium',
+            'status_id' => $status->id,
+        ]);
+        $requirement->timelineEntries()->attach($phase);
+
+        $this->actingAs($manager)->putJson(
+            route('projects.requirements.update', [$project, $requirement]),
+            [
+                'code' => $requirement->code,
+                'title' => $requirement->title,
+                'priority' => 'medium',
+                'status_id' => $status->id,
+                'lock_version' => 1,
+                'timeline_links_submitted' => true,
+            ],
+        )->assertOk();
+
+        $this->assertDatabaseMissing('requirement_timeline_entry', [
+            'requirement_id' => $requirement->id,
+            'timeline_entry_id' => $phase->id,
+        ]);
+    }
+
     public function test_requirement_crud_archive_and_optimistic_locking_are_audited(): void
     {
         $manager = $this->makeUser('project_manager');

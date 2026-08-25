@@ -65,4 +65,10 @@ class RequirementBookVersion extends Model
     {
         return $this->hasMany(AttachmentLink::class);
     }
+
+    /** @return HasMany<RequirementAnalysisRun, $this> */
+    public function analysisRuns(): HasMany
+    {
+        return $this->hasMany(RequirementAnalysisRun::class);
+    }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\LocalAiStatusController;
 use App\Http\Controllers\Settings\NotificationPreferencesController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
@@ -26,6 +27,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         ->name('settings.index');
     Route::get('system-settings', [SystemSettingsController::class, 'index'])
         ->name('system-settings.index');
+    Route::get('system-settings/local-ai/status', LocalAiStatusController::class)
+        ->name('system-settings.local-ai.status');
     Route::put('system-settings/{group}', [SystemSettingsController::class, 'update'])
         ->name('system-settings.update');
     Route::delete('system-settings/{group}', [SystemSettingsController::class, 'destroy'])

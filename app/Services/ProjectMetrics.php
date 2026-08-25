@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Date;
 
 class ProjectMetrics
 {
+    public function __construct(private readonly PhasePlanService $phasePlans) {}
+
     private const METRIC_ATTRIBUTES = [
         'metric_total_tasks',
         'metric_done_tasks',
@@ -45,6 +47,12 @@ class ProjectMetrics
         $now = Date::now();
 
         return $query
+            ->with([
+                'phases' => fn ($phases) => $phases->whereNull('archived_at')->with([
+                    'tasks' => fn ($tasks) => $tasks->whereNull('archived_at')->with('status:id,semantic'),
+                    'milestones' => fn ($milestones) => $milestones->whereNull('archived_at')->orderBy('starts_at'),
+                ])->orderBy('starts_at'),
+            ])
             ->withCount($this->countDefinitions($now))
             ->addSelect([
                 'metric_next_stage_id' => $this->nextStageSelect('id', $now),
@@ -66,7 +74,7 @@ class ProjectMetrics
         return $this->withMetrics($query);
     }
 
-    /** @return array{progress: int, health: string, total_tasks: int, open_tasks: int, overdue_tasks: int, requirements: int, high_risks: int, next_stage: array{id: int, title: string, kind: string, status: string, starts_at: string}|null} */
+    /** @return array{progress: int, health: string, phase_health: string|null, progress_mode: string, current_phase: array<string, mixed>|null, next_milestone: array<string, mixed>|null, phases: list<array<string, mixed>>, total_tasks: int, open_tasks: int, overdue_tasks: int, requirements: int, high_risks: int, next_stage: array{id: int, title: string, kind: string, status: string, starts_at: string}|null} */
     public function for(Project $project): array
     {
         if (! $project->hasAttribute('metric_total_tasks') || ! $project->hasAttribute('metric_next_stage_id')) {
@@ -80,7 +88,7 @@ class ProjectMetrics
         return $this->fromCounts($project);
     }
 
-    /** @return array{progress: int, health: string, total_tasks: int, open_tasks: int, overdue_tasks: int, requirements: int, high_risks: int, next_stage: array{id: int, title: string, kind: string, status: string, starts_at: string}|null} */
+    /** @return array{progress: int, health: string, phase_health: string|null, progress_mode: string, current_phase: array<string, mixed>|null, next_milestone: array<string, mixed>|null, phases: list<array<string, mixed>>, total_tasks: int, open_tasks: int, overdue_tasks: int, requirements: int, high_risks: int, next_stage: array{id: int, title: string, kind: string, status: string, starts_at: string}|null} */
     public function fromCounts(Project $project): array
     {
         $total = (int) $project->getAttribute('metric_total_tasks');
@@ -102,9 +110,20 @@ class ProjectMetrics
             )->toIso8601String(),
         ];
 
+        $phasePlan = $project->progress_mode === 'phases' ? $this->phasePlans->summary($project) : null;
+        $phaseHealth = $phasePlan['health'] ?? null;
+        $compatibleHealth = match ($phaseHealth) {
+            'overdue' => 'danger', 'attention' => 'attention', 'on_track', 'completed' => 'healthy', default => $health,
+        };
+
         return [
-            'progress' => $total === 0 ? 0 : (int) round(($done / $total) * 100),
-            'health' => $health,
+            'progress' => $phasePlan['progress'] ?? ($total === 0 ? 0 : (int) round(($done / $total) * 100)),
+            'health' => $compatibleHealth,
+            'phase_health' => $phaseHealth,
+            'progress_mode' => $project->progress_mode ?? 'tasks',
+            'current_phase' => $phasePlan['current_phase'] ?? null,
+            'next_milestone' => $phasePlan['next_milestone'] ?? null,
+            'phases' => $phasePlan['phases'] ?? [],
             'total_tasks' => $total,
             'open_tasks' => $open,
             'overdue_tasks' => $overdue,

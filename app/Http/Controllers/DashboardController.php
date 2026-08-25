@@ -83,6 +83,8 @@ class DashboardController extends Controller
                     'progress' => $projectMetrics['progress'],
                     'health' => $projectMetrics['health'],
                     'nextStage' => $projectMetrics['next_stage'],
+                    'currentPhase' => $projectMetrics['current_phase'],
+                    'nextMilestone' => $projectMetrics['next_milestone'],
                     'startDate' => $project->start_date?->toDateString(),
                     'endDate' => $project->end_date?->toDateString(),
                 ];

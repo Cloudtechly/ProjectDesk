@@ -31,7 +31,8 @@ class Project extends Model
 {
     protected $fillable = [
         'code', 'name', 'description', 'client_id', 'primary_contact_id', 'manager_id',
-        'status_id', 'priority', 'start_date', 'end_date', 'lock_version', 'archived_at',
+        'status_id', 'priority', 'entry_mode', 'progress_mode', 'start_date', 'end_date',
+        'transitioned_at', 'lock_version', 'archived_at',
     ];
 
     protected function casts(): array
@@ -39,6 +40,7 @@ class Project extends Model
         return [
             'start_date' => 'date',
             'end_date' => 'date',
+            'transitioned_at' => 'datetime',
             'archived_at' => 'datetime',
             'lock_version' => 'integer',
         ];
@@ -94,6 +96,42 @@ class Project extends Model
         return $this->hasMany(TimelineEntry::class);
     }
 
+    /** @return HasMany<TimelineEntry, $this> */
+    public function phases(): HasMany
+    {
+        return $this->hasMany(TimelineEntry::class)->where('kind', 'phase');
+    }
+
+    /** @return HasMany<RequirementCategory, $this> */
+    public function requirementCategories(): HasMany
+    {
+        return $this->hasMany(RequirementCategory::class);
+    }
+
+    /** @return HasMany<RequirementGroup, $this> */
+    public function requirementGroups(): HasMany
+    {
+        return $this->hasMany(RequirementGroup::class);
+    }
+
+    /** @return HasOne<ProjectOnboardingSnapshot, $this> */
+    public function onboardingSnapshot(): HasOne
+    {
+        return $this->hasOne(ProjectOnboardingSnapshot::class);
+    }
+
+    /** @return HasMany<RequirementAnalysisRun, $this> */
+    public function requirementAnalysisRuns(): HasMany
+    {
+        return $this->hasMany(RequirementAnalysisRun::class);
+    }
+
+    /** @return HasMany<RequirementRelation, $this> */
+    public function requirementRelations(): HasMany
+    {
+        return $this->hasMany(RequirementRelation::class);
+    }
+
     /** @return HasManyThrough<Meeting, TimelineEntry, $this> */
     public function meetings(): HasManyThrough
     {
@@ -138,6 +176,22 @@ class Project extends Model
     public function salesDocuments(): HasMany
     {
         return $this->hasMany(SalesDocument::class);
+    }
+
+    /**
+     * Keep scoped route-model binding aligned with the explicit domain
+     * relation names used by Project Desk.
+     */
+    protected function childRouteBindingRelationshipName($childType)
+    {
+        return match ($childType) {
+            'category' => 'requirementCategories',
+            'group' => 'requirementGroups',
+            'analysisRun' => 'requirementAnalysisRuns',
+            'requirementBookVersion' => 'requirementBookVersions',
+            'relation' => 'requirementRelations',
+            default => parent::childRouteBindingRelationshipName($childType),
+        };
     }
 
     /**

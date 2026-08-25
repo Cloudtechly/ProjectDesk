@@ -19,11 +19,14 @@ class RequirementService
     {
         return DB::transaction(function () use ($projectId, $validated, $actor): Requirement {
             Arr::forget($validated, 'lock_version');
+            Arr::forget($validated, 'timeline_links_submitted');
+            $timelineEntryIds = Arr::pull($validated, 'timeline_entry_ids', []);
             $requestedCode = trim((string) Arr::pull($validated, 'code', ''));
             $validated['project_id'] = $projectId;
             $validated['code'] = $requestedCode !== '' ? $requestedCode : 'PENDING-'.Str::uuid();
 
             $requirement = Requirement::query()->create($validated);
+            $requirement->timelineEntries()->sync($timelineEntryIds);
             if ($requestedCode === '') {
                 $requirement->forceFill([
                     'code' => 'REQ-'.str_pad((string) $requirement->id, 5, '0', STR_PAD_LEFT),
@@ -38,7 +41,7 @@ class RequirementService
                 request: request(),
             );
 
-            return $requirement->refresh()->load(['status', 'owner']);
+            return $requirement->refresh()->load(['status', 'owner', 'timelineEntries']);
         });
     }
 
@@ -48,6 +51,8 @@ class RequirementService
         return DB::transaction(function () use ($requirement, $validated, $actor): Requirement {
             $locked = Requirement::query()->lockForUpdate()->findOrFail($requirement->id);
             $requestedVersion = (int) Arr::pull($validated, 'lock_version');
+            $timelineLinksSubmitted = (bool) Arr::pull($validated, 'timeline_links_submitted', false);
+            $timelineEntryIds = Arr::pull($validated, 'timeline_entry_ids', null);
             $this->assertCurrentVersion($locked, $requestedVersion);
 
             if ($locked->archived_at !== null || $locked->project->archived_at !== null) {
@@ -61,9 +66,12 @@ class RequirementService
             $before = $locked->toArray();
             $validated['lock_version'] = $locked->lock_version + 1;
             $locked->fill($validated)->save();
+            if ($timelineLinksSubmitted || is_array($timelineEntryIds)) {
+                $locked->timelineEntries()->sync(is_array($timelineEntryIds) ? $timelineEntryIds : []);
+            }
             $this->activityLogger->record($locked, 'requirement.updated', $actor, $before, $locked->toArray(), request());
 
-            return $locked->load(['status', 'owner']);
+            return $locked->load(['status', 'owner', 'timelineEntries']);
         });
     }
 

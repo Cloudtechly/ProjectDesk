@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateTaskStatusRequest;
 use App\Models\Project;
 use App\Models\Requirement;
 use App\Models\Task;
+use App\Models\TimelineEntry;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\TaskService;
@@ -100,6 +101,7 @@ class TaskController extends Controller
             'members' => collect($projectMembers)->flatten(1)->unique('id')->sortBy('name')->values(),
             'projectMembers' => $projectMembers,
             'projectRequirements' => $this->projectRequirements($user),
+            'projectPhases' => $this->projectPhases($user),
             'statuses' => WorkflowStatus::query()->where('entity_type', 'task')->where('is_active', true)->orderBy('position')->get(),
             'openCreate' => false,
             'canCreate' => $createProjects->isNotEmpty(),
@@ -129,6 +131,7 @@ class TaskController extends Controller
             'members' => collect($projectMembers)->flatten(1)->unique('id')->sortBy('name')->values(),
             'projectMembers' => $projectMembers,
             'projectRequirements' => $this->projectRequirements($user),
+            'projectPhases' => $this->projectPhases($user),
             'statuses' => WorkflowStatus::query()->where('entity_type', 'task')->where('is_active', true)->orderBy('position')->get(),
             'openCreate' => true,
             'canCreate' => true,
@@ -170,6 +173,7 @@ class TaskController extends Controller
             'members' => $projectMembers[$task->project_id] ?? [],
             'projectMembers' => $projectMembers,
             'projectRequirements' => $this->projectRequirements($user),
+            'projectPhases' => $this->projectPhases($user),
             'statuses' => WorkflowStatus::query()->where('entity_type', 'task')->where('is_active', true)->orderBy('position')->get(),
             'openCreate' => false,
             'canCreate' => Project::query()->visibleTo($user)->whereNull('archived_at')->get()
@@ -277,6 +281,26 @@ class TaskController extends Controller
                     'project_id' => $requirement->project_id,
                     'code' => $requirement->code,
                     'title' => $requirement->title,
+                ])->all(),
+            ])
+            ->all();
+    }
+
+    /** @return array<int, array<int, array{id: int, title: string}>> */
+    private function projectPhases(User $user): array
+    {
+        return Project::query()
+            ->visibleTo($user)
+            ->whereNull('archived_at')
+            ->with(['phases' => fn ($phases) => $phases
+                ->whereNull('archived_at')
+                ->where('status', '!=', 'cancelled')
+                ->orderBy('starts_at')])
+            ->get(['id'])
+            ->mapWithKeys(fn (Project $project): array => [
+                $project->id => $project->phases->map(fn (TimelineEntry $phase): array => [
+                    'id' => $phase->id,
+                    'title' => $phase->title,
                 ])->all(),
             ])
             ->all();

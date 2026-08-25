@@ -8,6 +8,8 @@ use App\Http\Requests\UpdateRequirementBookVersionRequest;
 use App\Models\Project;
 use App\Models\RequirementBookVersion;
 use App\Models\User;
+use App\Services\LocalAiSettings;
+use App\Services\RequirementAnalysisService;
 use App\Services\RequirementBookService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -29,10 +31,16 @@ class RequirementBookController extends Controller
         StoreRequirementBookVersionRequest $request,
         Project $project,
         RequirementBookService $service,
+        LocalAiSettings $aiSettings,
+        RequirementAnalysisService $analysis,
     ): JsonResponse|RedirectResponse {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
         $version = $service->addVersion($project, $request->validated(), $user);
+        if ($aiSettings->enabled() && $aiSettings->autoAnalyze()
+            && in_array($version->fileObject->extension, ['pdf', 'docx'], true)) {
+            $analysis->start($project, $version, $user);
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['data' => $service->versionData($version)], 201);

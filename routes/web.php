@@ -6,16 +6,20 @@ use App\Http\Controllers\CsvController;
 use App\Http\Controllers\CsvImportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataJobController;
+use App\Http\Controllers\ExistingProjectController;
 use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\LocalePreferenceController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\OpenNotificationController;
+use App\Http\Controllers\PhasePlanController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectFileController;
 use App\Http\Controllers\ProjectSummaryPdfController;
+use App\Http\Controllers\RequirementAnalysisController;
 use App\Http\Controllers\RequirementBookController;
 use App\Http\Controllers\RequirementController;
+use App\Http\Controllers\RequirementTaxonomyController;
 use App\Http\Controllers\RiskController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\SalesDocumentPdfController;
@@ -43,6 +47,7 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
 
     Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
     Route::post('projects', [ProjectController::class, 'store'])->name('projects.store');
+    Route::post('projects/existing', [ExistingProjectController::class, 'store'])->name('projects.existing.store');
     Route::get('projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::get('projects/{project}/summary.pdf', ProjectSummaryPdfController::class)->name('projects.summary.pdf');
     Route::put('projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
@@ -139,6 +144,29 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         Route::put('projects/{project}/requirements/{requirement}', [RequirementController::class, 'update'])->name('projects.requirements.update');
         Route::post('projects/{project}/requirements/{requirement}/archive', [RequirementController::class, 'archive'])->name('projects.requirements.archive');
         Route::post('projects/{project}/requirements/{requirement}/restore', [RequirementController::class, 'restore'])->name('projects.requirements.restore');
+
+        Route::get('projects/{project}/phase-plan', [PhasePlanController::class, 'show'])->name('projects.phase-plan.show');
+        Route::put('projects/{project}/phase-plan', [PhasePlanController::class, 'update'])->name('projects.phase-plan.update');
+
+        Route::get('projects/{project}/requirement-taxonomy', [RequirementTaxonomyController::class, 'index'])->name('projects.requirement-taxonomy.index');
+        Route::post('projects/{project}/requirement-categories', [RequirementTaxonomyController::class, 'storeCategory'])->name('projects.requirement-categories.store');
+        Route::post('projects/{project}/requirement-categories/{category}/groups', [RequirementTaxonomyController::class, 'storeGroup'])->name('projects.requirement-groups.store');
+        Route::put('projects/{project}/requirement-categories/{category}', [RequirementTaxonomyController::class, 'updateCategory'])->name('projects.requirement-categories.update');
+        Route::put('projects/{project}/requirement-groups/{group}', [RequirementTaxonomyController::class, 'updateGroup'])->name('projects.requirement-groups.update');
+        Route::post('projects/{project}/requirement-groups/{group}/merge', [RequirementTaxonomyController::class, 'mergeGroup'])->name('projects.requirement-groups.merge');
+        Route::post('projects/{project}/requirements/{requirement}/relations', [RequirementTaxonomyController::class, 'storeRelation'])->name('projects.requirement-relations.store');
+        Route::delete('projects/{project}/requirement-relations/{relation}', [RequirementTaxonomyController::class, 'destroyRelation'])->name('projects.requirement-relations.destroy');
+        Route::post('projects/{project}/taxonomy-templates/{template}/apply', [RequirementTaxonomyController::class, 'applyTemplate'])
+            ->withoutScopedBindings()->name('projects.taxonomy-templates.apply');
+
+        Route::get('projects/{project}/requirement-analyses', [RequirementAnalysisController::class, 'index'])->name('projects.requirement-analyses.index');
+        Route::post('projects/{project}/requirement-book/versions/{requirementBookVersion}/analyses', [RequirementAnalysisController::class, 'store'])->name('projects.requirement-analyses.store');
+        Route::get('projects/{project}/requirement-analyses/{analysisRun}', [RequirementAnalysisController::class, 'show'])->name('projects.requirement-analyses.show');
+        Route::post('projects/{project}/requirement-analyses/{analysisRun}/cancel', [RequirementAnalysisController::class, 'cancel'])->name('projects.requirement-analyses.cancel');
+        Route::post('projects/{project}/requirement-analyses/{analysisRun}/retry', [RequirementAnalysisController::class, 'retry'])->name('projects.requirement-analyses.retry');
+        Route::post('projects/{project}/requirement-analyses/{analysisRun}/security-override', [RequirementAnalysisController::class, 'override'])->name('projects.requirement-analyses.override');
+        Route::get('projects/{project}/requirement-analyses/{analysisRun}/candidates', [RequirementAnalysisController::class, 'candidates'])->name('projects.requirement-candidates.index');
+        Route::post('projects/{project}/requirement-analyses/{analysisRun}/decisions', [RequirementAnalysisController::class, 'decide'])->name('projects.requirement-candidates.decide');
 
         Route::get('projects/{project}/risks', [RiskController::class, 'index'])->name('projects.risks.index');
         Route::post('projects/{project}/risks', [RiskController::class, 'store'])->name('projects.risks.store');

@@ -47,7 +47,8 @@
     </tr>
     <tr>
         <td><small>الصحة المشتقة</small><strong>{{ ['danger' => 'تحتاج تدخلاً', 'attention' => 'تحتاج متابعة', 'healthy' => 'مستقرة'][$metrics['health']] }}</strong></td>
-        <td colspan="2"><small>المرحلة القادمة</small><strong>{{ $metrics['next_stage']['title'] ?? 'لا توجد مرحلة قادمة' }}</strong>@if($metrics['next_stage']) <span class="muted" dir="ltr">{{ \Illuminate\Support\Carbon::parse($metrics['next_stage']['starts_at'])->format('Y-m-d') }}</span>@endif</td>
+        <td><small>المرحلة الحالية</small><strong>{{ $metrics['current_phase']['title'] ?? 'غير محددة' }}</strong></td>
+        <td><small>المعلم القادم</small><strong>{{ $metrics['next_milestone']['title'] ?? $metrics['next_stage']['title'] ?? 'لا يوجد' }}</strong></td>
     </tr>
 </table>
 
@@ -58,6 +59,20 @@
     <td><strong>{{ $metrics['overdue_tasks'] }}</strong><small>مهام متأخرة</small></td>
     <td><strong>{{ $metrics['requirements'] }}</strong><small>المتطلبات</small></td>
 </tr></table>
+
+@if(!empty($metrics['phases']))
+<h2>خطة المراحل الموزونة</h2>
+<table class="list">
+    <thead><tr><th>المرحلة</th><th>الوزن</th><th>التقدم</th><th>الصحة</th><th>المعالم</th></tr></thead>
+    <tbody>@foreach($metrics['phases'] as $phase)<tr>
+        <td><strong>{{ $phase['title'] }}</strong>@if($phase['awaiting_approval'])<br><span class="muted">بانتظار الاعتماد</span>@endif</td>
+        <td>{{ $phase['weight_percent'] }}%</td>
+        <td>{{ $phase['progress'] }}%</td>
+        <td>{{ ['on_track' => 'في المسار', 'attention' => 'تحتاج متابعة', 'overdue' => 'متأخرة', 'completed' => 'مكتملة'][$phase['health']] ?? $phase['health'] }}</td>
+        <td>{{ count($phase['milestones']) }}</td>
+    </tr>@endforeach</tbody>
+</table>
+@endif
 
 <h2>المهام الحالية</h2>
 @if($activeTasks->isEmpty())

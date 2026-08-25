@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import {
     BellRing,
+    Bot,
     Building2,
     CalendarDays,
     CheckCircle2,
@@ -37,6 +38,7 @@ type SettingsData = {
         overdue_tasks: boolean;
         upcoming_tasks: boolean;
         meetings: boolean;
+        milestones: boolean;
         lead_hours: number;
     };
     automatic_backup: {
@@ -48,6 +50,13 @@ type SettingsData = {
     calendar: {
         week_start: number;
         weekend_days: number[];
+    };
+    local_ai: {
+        enabled: boolean;
+        auto_analyze: boolean;
+        model: string;
+        context_size: number;
+        max_pages: number;
     };
 };
 
@@ -86,6 +95,7 @@ const fallbackSettings: SettingsData = {
         overdue_tasks: true,
         upcoming_tasks: true,
         meetings: true,
+        milestones: true,
         lead_hours: 24,
     },
     automatic_backup: {
@@ -95,6 +105,13 @@ const fallbackSettings: SettingsData = {
         retention_count: 30,
     },
     calendar: { week_start: 0, weekend_days: [5, 6] },
+    local_ai: {
+        enabled: false,
+        auto_analyze: false,
+        model: 'qwen3:8b-q4_K_M',
+        context_size: 8192,
+        max_pages: 300,
+    },
 };
 
 const sections: Array<{
@@ -132,6 +149,12 @@ const sections: Array<{
         label: 'التقويم',
         description: 'بداية الأسبوع وأيام العطلة',
         icon: CalendarDays,
+    },
+    {
+        id: 'local_ai',
+        label: 'الذكاء الاصطناعي المحلي',
+        description: 'Ollama وOCR دون خدمات سحابية',
+        icon: Bot,
     },
     {
         id: 'automatic_backup',
@@ -245,6 +268,51 @@ export default function SettingsIndex() {
     );
     const [workflowLoading, setWorkflowLoading] = useState(false);
     const [workflowSaving, setWorkflowSaving] = useState(false);
+    const [engineStatus, setEngineStatus] = useState<{
+        ollama?: { available: boolean; models: string[] };
+        model_installed?: boolean;
+        gpu?: {
+            available: boolean;
+            name?: string;
+            memory_total_mb?: number;
+            memory_free_mb?: number;
+        };
+        extractors?: {
+            poppler?: boolean;
+            pdf_images?: boolean;
+            tesseract?: boolean;
+            ocr_languages?: { ara?: boolean; eng?: boolean };
+        };
+        privacy?: { endpoint: string; cloud_enabled: boolean };
+    } | null>(null);
+    const [engineLoading, setEngineLoading] = useState(false);
+
+    const testLocalEngine = useCallback(async () => {
+        setEngineLoading(true);
+        setError('');
+
+        try {
+            setEngineStatus(
+                await jsonRequest('/system-settings/local-ai/status'),
+            );
+        } catch (requestError) {
+            setError(
+                requestError instanceof Error
+                    ? requestError.message
+                    : 'تعذر اختبار المحرك المحلي.',
+            );
+        } finally {
+            setEngineLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (activeSection === 'local_ai' && engineStatus === null) {
+            const timer = window.setTimeout(() => void testLocalEngine(), 0);
+
+            return () => window.clearTimeout(timer);
+        }
+    }, [activeSection, engineStatus, testLocalEngine]);
 
     const loadSettings = useCallback(async () => {
         setLoading(true);
@@ -963,6 +1031,24 @@ export default function SettingsIndex() {
                                                     )
                                                 }
                                             />
+                                            <ToggleField
+                                                checked={
+                                                    settings.notifications
+                                                        .milestones
+                                                }
+                                                disabled={
+                                                    !settings.notifications
+                                                        .enabled
+                                                }
+                                                label="معالم التسليم"
+                                                description="تنبيه قبل 14 و7 و3 أيام وعند التأخر"
+                                                onChange={(milestones) =>
+                                                    patchGroup(
+                                                        'notifications',
+                                                        { milestones },
+                                                    )
+                                                }
+                                            />
                                             <label className="system-settings-number-field">
                                                 <span>
                                                     <strong>
@@ -1235,6 +1321,244 @@ export default function SettingsIndex() {
                                             مركز البيانات مع سجل تدقيق مستقل.
                                         </p>
                                         {formActions('automatic_backup')}
+                                    </form>
+                                )}
+
+                                {activeSection === 'local_ai' && (
+                                    <form
+                                        onSubmit={(event) =>
+                                            void saveGroup('local_ai', event)
+                                        }
+                                    >
+                                        <header>
+                                            <Bot aria-hidden="true" />
+                                            <div>
+                                                <h2>الذكاء الاصطناعي المحلي</h2>
+                                                <p>
+                                                    تحليل PDF وDOCX على هذا
+                                                    الجهاز عبر Ollama؛ لا توجد
+                                                    مفاتيح API أو خدمات سحابية.
+                                                </p>
+                                            </div>
+                                        </header>
+                                        <div className="system-settings-stack">
+                                            <ToggleField
+                                                checked={
+                                                    settings.local_ai.enabled
+                                                }
+                                                onChange={(enabled) =>
+                                                    patchGroup('local_ai', {
+                                                        enabled,
+                                                    })
+                                                }
+                                                label="تفعيل التحليل المحلي"
+                                                description="يسمح لمدير المشروع ببدء التحليل والمراجعة البشرية."
+                                            />
+                                            <ToggleField
+                                                checked={
+                                                    settings.local_ai
+                                                        .auto_analyze
+                                                }
+                                                disabled={
+                                                    !settings.local_ai.enabled
+                                                }
+                                                onChange={(auto_analyze) =>
+                                                    patchGroup('local_ai', {
+                                                        auto_analyze,
+                                                    })
+                                                }
+                                                label="التحليل التلقائي بعد الرفع"
+                                                description="يبدأ بعد اجتياز فحص الملف، ويمكن إيقافه أو إعادة تشغيله."
+                                            />
+                                            <label>
+                                                <span>نموذج Ollama</span>
+                                                <input
+                                                    dir="ltr"
+                                                    value={
+                                                        settings.local_ai.model
+                                                    }
+                                                    onChange={(event) =>
+                                                        patchGroup('local_ai', {
+                                                            model: event
+                                                                .currentTarget
+                                                                .value,
+                                                        })
+                                                    }
+                                                    pattern="[a-zA-Z0-9._:-]+"
+                                                    required
+                                                />
+                                            </label>
+                                            <div className="system-settings-grid">
+                                                <label>
+                                                    <span>حجم السياق</span>
+                                                    <select
+                                                        value={
+                                                            settings.local_ai
+                                                                .context_size
+                                                        }
+                                                        onChange={(event) =>
+                                                            patchGroup(
+                                                                'local_ai',
+                                                                {
+                                                                    context_size:
+                                                                        Number(
+                                                                            event
+                                                                                .currentTarget
+                                                                                .value,
+                                                                        ),
+                                                                },
+                                                            )
+                                                        }
+                                                    >
+                                                        <option value="4096">
+                                                            4096
+                                                        </option>
+                                                        <option value="8192">
+                                                            8192 (موصى به)
+                                                        </option>
+                                                        <option value="16384">
+                                                            16384
+                                                        </option>
+                                                    </select>
+                                                </label>
+                                                <label>
+                                                    <span>حد الصفحات</span>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max="300"
+                                                        value={
+                                                            settings.local_ai
+                                                                .max_pages
+                                                        }
+                                                        onChange={(event) =>
+                                                            patchGroup(
+                                                                'local_ai',
+                                                                {
+                                                                    max_pages:
+                                                                        Number(
+                                                                            event
+                                                                                .currentTarget
+                                                                                .value,
+                                                                        ),
+                                                                },
+                                                            )
+                                                        }
+                                                    />
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <section
+                                            className="local-engine-status"
+                                            aria-live="polite"
+                                        >
+                                            <header>
+                                                <h3>حالة المكونات المحلية</h3>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        void testLocalEngine()
+                                                    }
+                                                    disabled={engineLoading}
+                                                >
+                                                    {engineLoading
+                                                        ? 'جارٍ الاختبار…'
+                                                        : 'اختبار محلي'}
+                                                </button>
+                                            </header>
+                                            <dl>
+                                                <div>
+                                                    <dt>Ollama</dt>
+                                                    <dd
+                                                        data-ok={
+                                                            engineStatus?.ollama
+                                                                ?.available
+                                                        }
+                                                    >
+                                                        {engineStatus?.ollama
+                                                            ?.available
+                                                            ? 'متصل على 127.0.0.1:11434'
+                                                            : 'غير متصل'}
+                                                    </dd>
+                                                </div>
+                                                <div>
+                                                    <dt>النموذج</dt>
+                                                    <dd
+                                                        data-ok={
+                                                            engineStatus?.model_installed
+                                                        }
+                                                    >
+                                                        {engineStatus?.model_installed
+                                                            ? 'مثبت'
+                                                            : 'غير مثبت'}
+                                                    </dd>
+                                                </div>
+                                                <div>
+                                                    <dt>GPU</dt>
+                                                    <dd
+                                                        data-ok={
+                                                            engineStatus?.gpu
+                                                                ?.available
+                                                        }
+                                                    >
+                                                        {engineStatus?.gpu
+                                                            ?.available
+                                                            ? `${engineStatus.gpu.name ?? 'NVIDIA'} · ${engineStatus.gpu.memory_free_mb ?? '—'}MB متاح`
+                                                            : 'غير مكتشف'}
+                                                    </dd>
+                                                </div>
+                                                <div>
+                                                    <dt>Poppler</dt>
+                                                    <dd
+                                                        data-ok={
+                                                            engineStatus
+                                                                ?.extractors
+                                                                ?.poppler
+                                                        }
+                                                    >
+                                                        {engineStatus
+                                                            ?.extractors
+                                                            ?.poppler
+                                                            ? 'جاهز'
+                                                            : 'غير مثبت'}
+                                                    </dd>
+                                                </div>
+                                                <div>
+                                                    <dt>Tesseract ara+eng</dt>
+                                                    <dd
+                                                        data-ok={
+                                                            engineStatus
+                                                                ?.extractors
+                                                                ?.tesseract &&
+                                                            engineStatus
+                                                                ?.extractors
+                                                                ?.ocr_languages
+                                                                ?.ara &&
+                                                            engineStatus
+                                                                ?.extractors
+                                                                ?.ocr_languages
+                                                                ?.eng
+                                                        }
+                                                    >
+                                                        {engineStatus
+                                                            ?.extractors
+                                                            ?.tesseract &&
+                                                        engineStatus?.extractors
+                                                            ?.ocr_languages
+                                                            ?.ara &&
+                                                        engineStatus?.extractors
+                                                            ?.ocr_languages?.eng
+                                                            ? 'جاهز'
+                                                            : 'ناقص'}
+                                                    </dd>
+                                                </div>
+                                                <div>
+                                                    <dt>الاتصال السحابي</dt>
+                                                    <dd data-ok>معطل دائمًا</dd>
+                                                </div>
+                                            </dl>
+                                        </section>
+                                        {formActions('local_ai')}
                                     </form>
                                 )}
 

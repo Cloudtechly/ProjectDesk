@@ -48,6 +48,7 @@ class UpdateSystemSettingsRequest extends FormRequest
                 'overdue_tasks' => ['sometimes', 'boolean'],
                 'upcoming_tasks' => ['sometimes', 'boolean'],
                 'meetings' => ['sometimes', 'boolean'],
+                'milestones' => ['sometimes', 'boolean'],
                 'lead_hours' => ['sometimes', 'integer', 'between:1,168'],
             ],
             'automatic_backup' => [
@@ -60,6 +61,13 @@ class UpdateSystemSettingsRequest extends FormRequest
                 'week_start' => ['sometimes', 'integer', 'between:0,6'],
                 'weekend_days' => ['sometimes', 'array', 'list', 'min:1'],
                 'weekend_days.*' => ['required', 'integer', 'distinct', 'between:0,6'],
+            ],
+            'local_ai' => [
+                'enabled' => ['sometimes', 'boolean'],
+                'auto_analyze' => ['sometimes', 'boolean'],
+                'model' => ['sometimes', 'string', 'max:120', 'regex:/^[a-zA-Z0-9._:-]+$/'],
+                'context_size' => ['sometimes', 'integer', Rule::in([4096, 8192, 16384])],
+                'max_pages' => ['sometimes', 'integer', 'between:1,300'],
             ],
             default => [],
         };

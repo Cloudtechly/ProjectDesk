@@ -110,7 +110,12 @@ try {
     });
     await bookForm.getByRole('button', { name: 'رفع إصدار جديد' }).click();
     await waitForSuccess('تم رفع إصدار جديد من كراسة المتطلبات.');
-    await page.getByText(title).waitFor();
+    await page
+        .locator('.requirement-book-versions article strong', {
+            hasText: title,
+        })
+        .first()
+        .waitFor();
 
     const attachmentUploader = page.locator('.project-file-uploader');
     await attachmentUploader.getByLabel('ربط المرفق بـ').selectOption('task');

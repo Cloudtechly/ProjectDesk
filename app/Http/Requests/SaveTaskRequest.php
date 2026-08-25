@@ -47,6 +47,7 @@ class SaveTaskRequest extends FormRequest
     {
         return [
             'project_id' => ['required', 'integer', 'exists:projects,id'],
+            'phase_id' => ['nullable', 'integer', 'exists:timeline_entries,id'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'status_id' => [
@@ -109,6 +110,13 @@ class SaveTaskRequest extends FormRequest
 
                 if (! $isMember) {
                     $validator->errors()->add('assignee_id', 'المسؤول يجب أن يكون عضواً نشطاً في فريق المشروع.');
+                }
+            }
+
+            if ($this->filled('phase_id')) {
+                $validPhase = $project->phases()->whereKey($this->integer('phase_id'))->whereNull('archived_at')->exists();
+                if (! $validPhase) {
+                    $validator->errors()->add('phase_id', 'المرحلة المختارة لا تتبع هذا المشروع.');
                 }
             }
 

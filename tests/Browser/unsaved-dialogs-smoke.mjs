@@ -39,8 +39,14 @@ async function assertUnsavedDialog({
         throw new Error(`${label}: beforeunload guard is missing`);
     }
 
-    page.once('dialog', (confirmation) => confirmation.dismiss());
+    const rejectedEscape = new Promise((resolve) => {
+        page.once('dialog', async (confirmation) => {
+            await confirmation.dismiss();
+            resolve();
+        });
+    });
     await page.keyboard.press('Escape');
+    await rejectedEscape;
     await dialog.waitFor();
 
     if (
@@ -49,14 +55,35 @@ async function assertUnsavedDialog({
         throw new Error(`${label}: rejected Escape discarded the draft`);
     }
 
-    page.once('dialog', (confirmation) => confirmation.dismiss());
-    await page.locator('[data-slot="dialog-overlay"]').click({
-        position: { x: 2, y: 2 },
+    const rejectedOverlayClose = new Promise((resolve) => {
+        page.once('dialog', async (confirmation) => {
+            await confirmation.dismiss();
+            resolve();
+        });
     });
+    const overlay = page.locator('[data-slot="dialog-overlay"]');
+    await overlay.dispatchEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+        pointerType: 'mouse',
+    });
+    await overlay.dispatchEvent('pointerup', {
+        bubbles: true,
+        button: 0,
+        pointerType: 'mouse',
+    });
+    await overlay.dispatchEvent('click', { bubbles: true, button: 0 });
+    await rejectedOverlayClose;
     await dialog.waitFor();
 
-    page.once('dialog', (confirmation) => confirmation.accept());
+    const acceptedClose = new Promise((resolve) => {
+        page.once('dialog', async (confirmation) => {
+            await confirmation.accept();
+            resolve();
+        });
+    });
     await dialog.getByRole('button', { name: 'إغلاق' }).click();
+    await acceptedClose;
     await dialog.waitFor({ state: 'hidden' });
 
     const focusReturned = await opener.evaluate(

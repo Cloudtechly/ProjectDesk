@@ -61,6 +61,625 @@
     --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Weighted delivery plan, requirement taxonomy, and local AI review */
+.phase-plan-workspace,
+.requirement-taxonomy,
+.requirement-analysis {
+    margin-block: 1rem 1.5rem;
+    border: 1px solid
+        color-mix(in srgb, var(--cloudtech-border, #c8d4df) 82%, #0f7890);
+    border-radius: 1.25rem;
+    background: linear-gradient(145deg, #fff 0%, #f5fafb 100%);
+    box-shadow: 0 16px 40px rgb(14 54 70 / 7%);
+    padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.phase-plan-workspace > header,
+.requirement-taxonomy > header,
+.requirement-analysis > header,
+.candidate-review > header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.phase-plan-workspace h2,
+.requirement-taxonomy h3,
+.requirement-analysis h2,
+.candidate-review h3 {
+    margin: 0;
+    color: #123b4a;
+}
+
+.phase-plan-summary {
+    display: grid;
+    justify-items: end;
+    gap: 0.3rem;
+}
+.phase-plan-summary strong {
+    font-size: 1.75rem;
+    color: #08758d;
+}
+.phase-plan-summary button,
+.phase-plan-editor button,
+.requirement-taxonomy button,
+.requirement-analysis button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 2.6rem;
+    border: 1px solid #9ab5c0;
+    border-radius: 0.75rem;
+    background: #fff;
+    color: #174b5c;
+    padding: 0.55rem 0.85rem;
+    font-weight: 700;
+}
+.phase-plan-summary button:focus-visible,
+.phase-plan-editor button:focus-visible,
+.requirement-taxonomy button:focus-visible,
+.requirement-analysis button:focus-visible,
+.existing-project-dialog button:focus-visible,
+.existing-project-dialog input:focus-visible,
+.existing-project-dialog select:focus-visible,
+.existing-project-dialog textarea:focus-visible {
+    outline: 3px solid #31b8d3;
+    outline-offset: 2px;
+}
+
+.phase-plan-rail {
+    display: grid;
+    gap: 1rem;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+.phase-plan-rail > li {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(10rem, 1fr) auto;
+    gap: 0.35rem 1rem;
+    border-inline-start: 4px solid #1593aa;
+    border-radius: 0.8rem;
+    background: #fff;
+    padding: 1rem;
+}
+.phase-plan-progress {
+    grid-column: 1 / -1;
+    height: 0.5rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #dce9ed;
+}
+.phase-plan-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #0d8198, #35b7a2);
+}
+.phase-plan-rail em {
+    color: #a05a00;
+    font-style: normal;
+    font-weight: 700;
+}
+.phase-plan-rail ul {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+.phase-plan-rail ul li {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 12rem;
+    border: 1px solid #d2e1e6;
+    border-radius: 0.7rem;
+    padding: 0.65rem;
+}
+.phase-plan-rail ul span {
+    color: #08758d;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.phase-plan-editor {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.phase-plan-editor > fieldset,
+.existing-project-step fieldset {
+    border: 1px solid #b7cbd3;
+    border-radius: 1rem;
+    background: #fff;
+    padding: 1rem;
+}
+.phase-plan-editor legend,
+.existing-project-step legend {
+    padding-inline: 0.5rem;
+    color: #14556a;
+    font-weight: 800;
+}
+.phase-plan-editor input,
+.phase-plan-editor select,
+.phase-plan-editor textarea,
+.requirement-taxonomy input,
+.analysis-start select,
+.existing-project-dialog input,
+.existing-project-dialog select,
+.existing-project-dialog textarea {
+    width: 100%;
+    min-height: 2.75rem;
+    border: 1.5px solid #8caab6;
+    border-radius: 0.7rem;
+    background: #fff;
+    color: #153b49;
+    padding: 0.65rem 0.75rem;
+}
+.phase-plan-editor label > span,
+.analysis-start label > span,
+.existing-project-dialog label > span {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: #264d5a;
+    font-size: 0.84rem;
+    font-weight: 800;
+}
+.milestone-editor {
+    margin-top: 1rem;
+    border-top: 1px dashed #b7cbd3;
+    padding-top: 1rem;
+}
+.milestone-editor > div,
+.existing-repeating-row {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1fr auto auto;
+    align-items: end;
+    gap: 0.65rem;
+    margin-bottom: 0.65rem;
+}
+.checkbox-label {
+    display: flex !important;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 2.75rem;
+}
+.checkbox-label input {
+    width: 1.1rem !important;
+    min-height: auto !important;
+}
+.phase-plan-editor footer,
+.existing-inline-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+.phase-plan-editor footer strong {
+    margin-inline-start: auto;
+}
+.is-valid {
+    color: #08724f;
+}
+.is-invalid {
+    color: #b13939;
+}
+.phase-remove.is-danger,
+button.is-danger {
+    color: #a52f37;
+    border-color: #d7a2a6;
+}
+.phase-plan-message,
+.analysis-message {
+    border-radius: 0.7rem;
+    background: #e9f5f7;
+    padding: 0.7rem 0.9rem;
+    color: #174b5c;
+}
+
+.requirement-taxonomy > header > div,
+.requirement-analysis > header > div {
+    display: flex;
+    gap: 0.75rem;
+}
+.requirement-taxonomy > header svg,
+.requirement-analysis > header svg {
+    width: 1.6rem;
+    color: #0c839a;
+}
+.requirement-taxonomy > header form {
+    display: flex;
+    gap: 0.5rem;
+}
+.requirement-tree {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+.requirement-tree details {
+    border: 1px solid #c8d9df;
+    border-radius: 0.8rem;
+    background: #fff;
+    padding: 0.7rem;
+}
+.requirement-tree summary {
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+    color: #174b5c;
+}
+.requirement-tree details details {
+    margin: 0.7rem 0 0;
+    background: #f8fbfc;
+}
+.requirement-tree ul {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0.65rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+.requirement-tree li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.7rem;
+    border-top: 1px solid #e0eaed;
+    padding: 0.65rem 0.25rem;
+}
+.requirement-tree li div {
+    display: grid;
+}
+.taxonomy-order-actions {
+    display: inline-flex;
+    gap: 0.25rem;
+    margin-inline-start: auto;
+}
+.taxonomy-order-actions button {
+    min-height: 2rem;
+    padding: 0.2rem 0.4rem;
+}
+.taxonomy-group-tools {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    border-block: 1px solid #e1ebee;
+    background: #f8fbfc;
+    padding: 0.55rem 0.75rem;
+}
+.taxonomy-group-tools label {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 10rem;
+    color: #526e77;
+    font-size: 0.75rem;
+}
+.taxonomy-group-tools select,
+.requirement-relation-add select {
+    min-height: 2.35rem;
+    border: 1px solid #9ab3bc;
+    border-radius: 0.55rem;
+    background: #fff;
+    padding-inline: 0.55rem;
+}
+.requirement-tree li .requirement-relation-tags,
+.requirement-tree li .requirement-relation-add {
+    grid-column: 2 / -1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+.requirement-relation-tags span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 999px;
+    background: #edf5f7;
+    padding: 0.2rem 0.25rem 0.2rem 0.55rem;
+    color: #315965;
+    font-size: 0.75rem;
+}
+.requirement-relation-tags button {
+    min-height: 1.5rem;
+    border: 0;
+    background: transparent;
+    padding: 0 0.3rem;
+    color: #a43c3c;
+}
+.requirement-relation-add select:first-child {
+    flex: 1;
+    min-width: min(16rem, 100%);
+}
+.requirement-coverage {
+    border-radius: 999px;
+    background: #fff1df;
+    color: #925a14;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+.requirement-coverage[data-covered='true'] {
+    background: #e1f5ed;
+    color: #08724f;
+}
+.requirement-group-add {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.requirement-analysis {
+    margin-top: 1.5rem;
+}
+.analysis-start {
+    display: flex;
+    align-items: end;
+    gap: 0.75rem;
+    margin-block: 1rem;
+    border: 1px dashed #8db5c1;
+    border-radius: 0.9rem;
+    background: #f1f9fa;
+    padding: 0.9rem;
+}
+.analysis-start label {
+    flex: 1;
+}
+.analysis-runs {
+    display: grid;
+    gap: 0.6rem;
+}
+.analysis-runs article {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 1px solid #d2e1e6;
+    border-radius: 0.8rem;
+    background: #fff;
+    padding: 0.8rem;
+}
+.analysis-runs article > div {
+    display: grid;
+    gap: 0.2rem;
+}
+.analysis-runs article > div:last-child {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.candidate-review {
+    margin-top: 1rem;
+    border-top: 2px solid #d4e4e9;
+    padding-top: 1rem;
+}
+.candidate-review > article {
+    margin-top: 0.75rem;
+    border: 1px solid #cbdce2;
+    border-radius: 0.9rem;
+    background: #fff;
+    padding: 1rem;
+}
+.candidate-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.candidate-heading > div {
+    display: grid;
+    gap: 0.25rem;
+}
+.candidate-heading span {
+    color: #55717b;
+    font-size: 0.8rem;
+}
+.candidate-heading em {
+    border-radius: 999px;
+    background: #e8f2f5;
+    padding: 0.2rem 0.55rem;
+    color: #0b6f85;
+    font-style: normal;
+}
+.candidate-review blockquote {
+    display: grid;
+    gap: 0.3rem;
+    margin: 0.8rem 0;
+    border-inline-start: 4px solid #38a6b8;
+    background: #f4f9fa;
+    padding: 0.75rem;
+}
+.candidate-review footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+.candidate-edit-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+    border: 1px solid #9fc7d1;
+    border-radius: 0.8rem;
+    background: #f7fbfc;
+    padding: 1rem;
+}
+.candidate-edit-form legend {
+    color: #123b4a;
+    font-weight: 800;
+    padding-inline: 0.4rem;
+}
+.candidate-edit-form label {
+    display: grid;
+    gap: 0.35rem;
+    color: #274e5c;
+    font-weight: 700;
+}
+.candidate-edit-form input,
+.candidate-edit-form select,
+.candidate-edit-form textarea,
+.candidate-merge select {
+    width: 100%;
+    min-height: 2.7rem;
+    border: 1px solid #90aeb8;
+    border-radius: 0.65rem;
+    background: #fff;
+    padding: 0.6rem 0.7rem;
+    color: #102f39;
+}
+.candidate-edit-form .span-two {
+    grid-column: 1 / -1;
+}
+.candidate-impact {
+    border-radius: 0.6rem;
+    background: #fff5db;
+    padding: 0.55rem 0.75rem;
+    color: #71531a;
+    font-weight: 700;
+}
+.candidate-merge {
+    min-width: min(20rem, 100%);
+}
+
+.existing-project-dialog {
+    width: min(96vw, 76rem) !important;
+    max-width: 76rem !important;
+    max-height: 92vh;
+    overflow-y: auto;
+}
+.existing-wizard-steps {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.35rem;
+    margin: 0.5rem 0 1rem;
+    padding: 0;
+    list-style: none;
+}
+.existing-wizard-steps li {
+    display: grid;
+    justify-items: center;
+    gap: 0.25rem;
+    color: #67818a;
+    text-align: center;
+}
+.existing-wizard-steps li span {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid #b7cbd3;
+    border-radius: 50%;
+    background: #fff;
+    font-weight: 800;
+}
+.existing-wizard-steps li[aria-current='step'] span {
+    border-color: #0c839a;
+    background: #0c839a;
+    color: #fff;
+}
+.existing-wizard-steps li.is-complete span {
+    border-color: #279979;
+    background: #e5f6ef;
+    color: #08724f;
+}
+.existing-project-step {
+    min-height: 18rem;
+}
+.existing-member-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-top: 1rem;
+}
+.existing-member-grid label {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 0.5rem;
+}
+.existing-phase-step {
+    display: grid;
+    gap: 0.75rem;
+}
+.existing-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+.existing-review dl {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+.existing-review dl div {
+    border: 1px solid #cedee3;
+    border-radius: 0.75rem;
+    background: #fff;
+    padding: 0.75rem;
+}
+.existing-review dt {
+    color: #607a83;
+    font-size: 0.8rem;
+}
+.existing-review dd {
+    margin: 0.2rem 0 0;
+    color: #153b49;
+    font-weight: 800;
+}
+
+@media (max-width: 768px) {
+    .phase-plan-workspace > header,
+    .requirement-taxonomy > header,
+    .requirement-analysis > header,
+    .analysis-runs article,
+    .candidate-heading {
+        flex-direction: column;
+    }
+    .candidate-edit-form {
+        grid-template-columns: 1fr;
+    }
+    .candidate-edit-form .span-two {
+        grid-column: auto;
+    }
+    .phase-plan-summary {
+        justify-items: start;
+    }
+    .milestone-editor > div,
+    .existing-repeating-row {
+        grid-template-columns: 1fr;
+    }
+    .requirement-taxonomy > header form,
+    .requirement-group-add,
+    .analysis-start {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .existing-wizard-steps {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+    .existing-wizard-steps li {
+        min-width: 6.5rem;
+    }
+    .existing-member-grid,
+    .existing-split,
+    .existing-review dl {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .phase-plan-progress span {
+        transition: none;
+    }
+}
+
 :root {
     --ct-brand: #406386;
     --ct-brand-deep: #102d3d;
