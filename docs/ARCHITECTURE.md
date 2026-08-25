@@ -214,6 +214,7 @@ resources/js/
     tasks/
       task-form-dialog.tsx
       task-kanban-board.tsx
+      task-page-toolbar.tsx
   layouts/
   pages/
     dashboard/
