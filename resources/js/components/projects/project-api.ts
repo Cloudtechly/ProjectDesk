@@ -10,12 +10,13 @@ export async function projectApi<T>(
     url: string,
     init?: RequestInit,
 ): Promise<T> {
+    const isFormData = init?.body instanceof FormData;
     const response = await fetch(url, {
         credentials: 'same-origin',
         ...init,
         headers: {
             Accept: 'application/json',
-            'Content-Type': 'application/json',
+            ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
             'X-CSRF-TOKEN': csrfToken(),
             ...init?.headers,
         },
