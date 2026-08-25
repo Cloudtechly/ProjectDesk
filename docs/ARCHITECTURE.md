@@ -196,11 +196,24 @@ app/
   Security/
 resources/js/
   components/
+    data-center/
+      data-center-contracts.ts
+      data-center-workspace.tsx
     projects/
       governance-dialogs.tsx
       phase-plan-workspace.tsx
+      project-tab-content.tsx
       requirement-taxonomy-workspace.tsx
       requirement-analysis-workspace.tsx
+    sales/
+      sales-contracts.ts
+      sales-workspace.tsx
+    settings/
+      settings-contracts.ts
+      settings-workspace.tsx
+    tasks/
+      task-form-dialog.tsx
+      task-kanban-board.tsx
   layouts/
   pages/
     dashboard/
@@ -224,7 +237,7 @@ tests/
   Browser/
 ```
 
-عند نمو موديول يُستخرج إلى خدمة أو مكون وظيفي موجود فعليًا، ولا ينشأ هيكل `Domain` افتراضي بلا كود. `ProjectController` مثلًا ينسق الطلب فقط، بينما بناء بيانات القائمة ومساحة المشروع والفريق ودورة الحياة في خدمات مستقلة. النسخ الاحتياطي يفصل التشفير ومعاملة ملفات الاستعادة عن المنسق العام.
+عند نمو موديول يُستخرج إلى خدمة أو مكون وظيفي موجود فعليًا، ولا ينشأ هيكل `Domain` افتراضي بلا كود. `ProjectController` مثلًا ينسق الطلب فقط، بينما بناء بيانات القائمة ومساحة المشروع والفريق ودورة الحياة في خدمات مستقلة. النسخ الاحتياطي يفصل التشفير ومعاملة ملفات الاستعادة عن المنسق العام. صفحات المشروع والمهام والإعدادات ومركز البيانات وقوالب الفواتير أصبحت منسقات رقيقة، بينما توجد العقود واللوحات والوورك فلوز في المكونات الوظيفية المبينة أعلاه مع بقاء Inertia props والمسارات كما هي.
 
 ## 8. النموذج العلائقي الأساسي
 
