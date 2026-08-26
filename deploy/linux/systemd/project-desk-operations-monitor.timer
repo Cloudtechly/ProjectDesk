@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Project Desk operational monitoring every five minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Persistent=true
+Unit=project-desk-operations-monitor.service
+
+[Install]
+WantedBy=timers.target

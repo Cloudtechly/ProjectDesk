@@ -1,33 +1,128 @@
 {
+    "schema_version": 2,
     "release_sha": "replace-with-final-40-character-sha",
+    "generated_at": "replace-with-ISO-8601-timestamp",
+    "environment": {
+        "name": "production",
+        "base_url": "https://project-desk.example.com",
+        "server_id": "replace-with-server-id",
+        "ubuntu_version": "24.04 LTS",
+        "php_version": "8.4.x",
+        "database_path": "/var/lib/project-desk/database.sqlite"
+    },
+    "scanner": {
+        "release_sha": "replace-with-final-40-character-sha",
+        "verified_at": "replace-with-ISO-8601-timestamp",
+        "clean": {
+            "passed": false,
+            "activity_id": "replace-with-activity-id",
+            "checked_at": "replace-with-ISO-8601-timestamp"
+        },
+        "eicar": {
+            "passed": false,
+            "activity_id": "replace-with-activity-id",
+            "checked_at": "replace-with-ISO-8601-timestamp"
+        },
+        "outage": {
+            "passed": false,
+            "activity_id": "replace-with-activity-id",
+            "checked_at": "replace-with-ISO-8601-timestamp"
+        }
+    },
+    "offsite_backup": {
+        "release_sha": "replace-with-final-40-character-sha",
+        "verified_at": "replace-with-ISO-8601-timestamp",
+        "provider": "s3-compatible",
+        "bucket": "replace-with-bucket-name",
+        "object_key": "replace-with-object-key",
+        "object_version_id": "replace-with-version-id",
+        "object_lock_enabled": false,
+        "versioning_enabled": false,
+        "server_side_encryption_enabled": false,
+        "public_access_blocked": false,
+        "object_created_at": "replace-with-ISO-8601-timestamp",
+        "retention_until": "replace-with-ISO-8601-timestamp-at-least-35-days-later",
+        "rclone_check_passed": false,
+        "checksum_sha256": "replace-with-64-character-sha256"
+    },
+    "services": {
+        "checked_at": "replace-with-ISO-8601-timestamp",
+        "queue_active": false,
+        "scheduler_active": false,
+        "backup_timer_active": false,
+        "monitor_timer_active": false,
+        "failed_jobs": -1,
+        "free_disk_bytes": 0,
+        "nginx_config_valid": false,
+        "https_redirect": false,
+        "hsts": false,
+        "secure_cookie": false
+    },
     "restore_drill": {
-        "completed_at": "2026-08-25T00:00:00+02:00",
-        "rpo_hours": 24,
-        "rto_hours": 4,
-        "backup_checksum_sha256": "replace-with-verified-checksum"
+        "release_sha": "replace-with-final-40-character-sha",
+        "completed_at": "replace-with-ISO-8601-timestamp",
+        "rpo_hours": 999,
+        "rto_hours": 999,
+        "backup_checksum_sha256": "replace-with-64-character-sha256",
+        "isolated_environment": "replace-with-environment-id",
+        "login_passed": false,
+        "projects_passed": false,
+        "tasks_passed": false,
+        "documents_passed": false,
+        "files_passed": false
     },
     "accessibility": {
-        "approved_by": "replace-with-reviewer",
-        "keyboard": true,
-        "screen_reader": true,
-        "bidi": true,
-        "zoom_200_percent": true,
-        "reduced_motion": true
+        "release_sha": "replace-with-final-40-character-sha",
+        "tested_at": "replace-with-ISO-8601-timestamp",
+        "approved_by": "replace-with-reviewer-name",
+        "browsers": [
+            "Chrome",
+            "Firefox"
+        ],
+        "screen_reader_name": "NVDA",
+        "keyboard": false,
+        "screen_reader": false,
+        "bidi": false,
+        "zoom_200_percent": false,
+        "reduced_motion": false
     },
     "performance": {
-        "inp_p75_ms": 200,
-        "search_p95_ms": 500,
-        "dataset_description": "replace-with-representative-dataset"
+        "release_sha": "replace-with-final-40-character-sha",
+        "measured_at": "replace-with-ISO-8601-timestamp",
+        "inp_p75_ms": 999,
+        "inp_sample_count": 0,
+        "search_p95_ms": 999,
+        "search_sample_count": 0,
+        "dataset_description": "10,000 tasks, 1,000 requirements, 300-page specification and 12 sessions"
     },
     "pilot": {
-        "projects": 2,
-        "users": 8,
-        "unassisted_success_percent": 90,
-        "sus": 75
+        "release_sha": "replace-with-final-40-character-sha",
+        "completed_at": "replace-with-ISO-8601-timestamp",
+        "projects": 0,
+        "users": 0,
+        "journeys": [
+            {
+                "name": "replace-with-journey-name",
+                "attempts": 0,
+                "unassisted_successes": 0
+            }
+        ],
+        "unassisted_success_percent": 0,
+        "sus": 0,
+        "sus_response_count": 0
     },
     "approvals": {
-        "product": "replace-with-name-and-date",
-        "technical": "replace-with-name-and-date",
-        "operations": "replace-with-name-and-date"
+        "product": {
+            "name": "replace-with-name",
+            "approved_at": "replace-with-ISO-8601-timestamp"
+        },
+        "technical": {
+            "name": "replace-with-name",
+            "approved_at": "replace-with-ISO-8601-timestamp"
+        },
+        "operations": {
+            "name": "replace-with-name",
+            "approved_at": "replace-with-ISO-8601-timestamp"
+        }
     }
 }

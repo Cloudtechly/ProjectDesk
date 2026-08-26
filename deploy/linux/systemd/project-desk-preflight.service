@@ -1,16 +1,14 @@
 [Unit]
-Description=Create and verify a Project Desk off-host backup
-After=network-online.target
+Description=Verify Project Desk production readiness
+After=network-online.target nginx.service php8.4-fpm.service clamav-daemon.service
 Wants=network-online.target
 
 [Service]
 Type=oneshot
-User=project-desk
-Group=project-desk
 WorkingDirectory=/var/www/project-desk
 EnvironmentFile=/etc/project-desk/app.env
 EnvironmentFile=/etc/project-desk/operations.env
-ExecStart=/usr/bin/bash /var/www/project-desk/deploy/linux/scripts/offsite-backup.sh
+ExecStart=/usr/bin/bash /var/www/project-desk/deploy/linux/scripts/production-preflight.sh
 UMask=0077
 PrivateTmp=true
 NoNewPrivileges=true

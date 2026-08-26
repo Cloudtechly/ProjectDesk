@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - develop
   pull_request:
   workflow_dispatch:
 
@@ -15,6 +16,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  linux-deployment-contracts:
+    name: Linux deployment contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install deployment validators
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes nginx shellcheck
+
+      - name: Check deployment scripts
+        run: shellcheck deploy/linux/scripts/*.sh
+
+      - name: Verify systemd unit syntax
+        run: |
+          sudo useradd --system --home /var/www/project-desk --shell /usr/sbin/nologin project-desk
+          sudo mkdir -p /var/www /etc/project-desk
+          sudo ln -s "${GITHUB_WORKSPACE}" /var/www/project-desk
+          sudo touch /etc/project-desk/app.env /etc/project-desk/operations.env
+          sudo chmod 0600 /etc/project-desk/app.env /etc/project-desk/operations.env
+          sudo systemd-analyze verify --recursive-errors=no deploy/linux/systemd/*.service deploy/linux/systemd/*.timer
+
+      - name: Verify Nginx template
+        run: |
+          sudo mkdir -p /etc/letsencrypt/live/project-desk.example.internal
+          sudo mkdir -p /var/www/project-desk/public /var/www/letsencrypt
+          sudo openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
+            -subj '/CN=project-desk.example.internal' \
+            -keyout /etc/letsencrypt/live/project-desk.example.internal/privkey.pem \
+            -out /etc/letsencrypt/live/project-desk.example.internal/fullchain.pem
+          sudo cp deploy/linux/nginx/project-desk.conf /etc/nginx/sites-enabled/default
+          sudo nginx -t
+
   quality-and-tests:
     name: PHP 8.4 / Node 22.12
     runs-on: ubuntu-latest
